@@ -1,7 +1,7 @@
 # Add covariates to surveys dataframe
 # -----------------------------------
 #
-# Edited: July 5, 2016
+# Edited: July 12, 2016
 
 
 library(raster)
@@ -22,6 +22,12 @@ for(yi in years[1:13]){
   pixels <- cellFromXY(afr, survey.data.agg[mask, c("lon", "lat")])
   survey.data.agg$ntl[mask] <- getValues(afr)[pixels]
 }
+# Repeat values of 2013 in 2014
+mask <- survey.data.agg$year == 2014
+filename <- paste("data/ntl/ts", yi, "T-1.tif", sep = "")
+afr <- raster(filename)
+pixels <- cellFromXY(afr, survey.data.agg[mask, c("lon", "lat")])
+survey.data.agg$ntl[mask] <- getValues(afr)[pixels]
 
 
 # Add population data to the dataframe
