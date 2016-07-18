@@ -7,12 +7,9 @@ source("code/inla_dataformat_tzz.R")
 # Predictor
 predictor <- y ~ -1 + intercept +
                   year +
-                  population + #f(population, model = "sigm") +
-                  ntl + #f(ntl, model = "sigm") +
+                  f(population, model = "sigm") +
+                  f(ntl, model = "sigm") +
                   f(u.field, model = afr.spde) + 
-                  #f(u.field, model = afr.spde,
-                  # group = u.field.group,
-                  # control.group = list(model = "rw1")) #+
                   f(epsilon, model = "iid", hyper = list(theta = list(prior = "loggamma", param = c(1, .01))))
         
 
@@ -69,7 +66,8 @@ m <- inla(predictor,
           Ntrials = c(df$total, rep(1, nrow(test.survey))),
           control.predictor = list(A = inla.stack.A(stack.all),
                                    compute = TRUE),
-          control.compute = list(cpo = TRUE, dic = TRUE, config = TRUE))
+          control.compute = list(cpo = TRUE, dic = TRUE, config = TRUE),#)
+          control.inla = list(strategy = "laplace", npoints = 21))
 
 summary(m)
 
