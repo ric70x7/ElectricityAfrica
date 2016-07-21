@@ -15,8 +15,8 @@ predictor <- y ~ -1 + intercept +
                   year +
                   population +
                   ntl +
-                  f(lon, model = "z") +
-                  f(lat, model = "z") 
+                  f(lon, model = "crw2") +
+                  f(lat, model = "crw2") 
         
 
 # Stack for training sample
