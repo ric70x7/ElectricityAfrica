@@ -58,8 +58,8 @@ m <- inla(predictor,
           Ntrials = c(df$total, rep(1, num.test)),
           control.predictor = list(A = inla.stack.A(stack.all),
                                    compute = TRUE),
-          control.compute = list(cpo = TRUE, dic = TRUE, config = TRUE))
-#          control.inla = list(strategy = "laplace", npoints = 21))
+          control.compute = list(cpo = TRUE, dic = TRUE, config = TRUE),#)
+          control.inla = list(strategy = "laplace", npoints = 21))
 
 summary(m)
 
