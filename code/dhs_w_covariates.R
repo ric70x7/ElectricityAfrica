@@ -33,6 +33,7 @@ coords <- xyFromCell(afr, df$pixel)
 df$lon <- coords[,1]
 df$lat <- coords[,2]
 
+
 # Add NTL data to the dataframe
 df$ntl <- NA
 years <- sort(unique(df$year))
@@ -42,9 +43,9 @@ for(yi in years[1:13]){
   filename <- paste("data/ntl/Inland_water_masked_5k/ts", yi, "W_template.tif", sep = "") #5Km resolution
   afr <- raster(filename)
   pixels <- cellFromXY(afr, df[mask, c("lon", "lat")])
-  rowcol <- rowColFromCell(afr, pixels) 
-  df$ntl[mask] <- afr[rowcol]
-  #df$ntl[mask] <- getValues(afr)[pixels]
+  df$ntl[mask] <- afr[pixels]
+  #rowcol <- rowColFromCell(afr, pixels) 
+  #df$ntl[mask] <- afr[rowcol]
 }
 # Repeat values of 2013 in 2014
 mask <- df$year == 2014
@@ -85,3 +86,4 @@ df$z.ntl <- log(1+df$ntl)
 #df$z.lat <- df$lat + 1+abs(min(df$lat))
 
 save(df, file = "code_output/electricity_dhs_w_covariates.RData")
+save(center.year, scale.year, file = "code_output/z_params.RData")

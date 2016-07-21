@@ -7,8 +7,7 @@
 graphics.off()
 rm(list = ls())
 source("code/inla_preliminaries.R")
-plot(mesh.s)
-points(df$lon, df$lat, pch = 16, col = "blue", cex = 1)
+
 
 # Predictor
 predictor <- y ~ -1 + intercept +
@@ -27,8 +26,9 @@ stack.obsv <- inla.stack(data = list(y = df$has_electricity),
                          tag = "obsv")
 
 
-if(split.data){
+if(TRUE){
   
+  load("code_output/other_data_w_covariates.RData")
   stack.test <- inla.stack(data = list(y = NA),
                            A = list(1, 1, 1, 1),
                            effects = list(list(intercept = rep(1, nrow(df.test))),
@@ -58,8 +58,8 @@ m <- inla(predictor,
           Ntrials = c(df$total, rep(1, num.test)),
           control.predictor = list(A = inla.stack.A(stack.all),
                                    compute = TRUE),
-          control.compute = list(cpo = TRUE, dic = TRUE, config = TRUE),#)
-          control.inla = list(strategy = "laplace", npoints = 21))
+          control.compute = list(dic = TRUE))
+          #control.inla = list(strategy = "laplace", npoints = 21))
 
 summary(m)
 
@@ -78,12 +78,13 @@ for(i in seq(nrow(df.test))){
   predicted.test.mean[i] <- inla.emarginal(inla.link.invlogit,
                                             m$marginals.linear.predictor[meta$ix$stack$test][[i]] )
 }
+df.test$r <- df.test$electricity
 plot(df.test$r, predicted.test.mean )
 
-m11 <- sum(df.test$r <= .5 & predicted.test.mean <= .9)
-m22 <- sum(df.test$r > .5 & predicted.test.mean > .9)
-m21 <- sum(df.test$r <= .5 & predicted.test.mean > .9)
-m12 <- sum(df.test$r > .5 & predicted.test.mean <= .9)
+m11 <- sum(df.test$r <= .5 & predicted.test.mean <= .5)
+m22 <- sum(df.test$r > .5 & predicted.test.mean > .5)
+m21 <- sum(df.test$r <= .5 & predicted.test.mean > .5)
+m12 <- sum(df.test$r > .5 & predicted.test.mean <= .5)
 
 (m11 + m22)/(m11 + m22 + m21 + m12)
 
