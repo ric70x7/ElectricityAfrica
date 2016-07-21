@@ -81,7 +81,7 @@ df$z.year <- scale(df$year, center = center.year, scale = scale.year)
 df$z.pop2010 <- log(1+df$pop2010)
 df$z.ntl <- log(1+df$ntl)
 
-df$z.lon <- df$lon + 1+abs(min(df$lon))
-df$z.lat <- df$lat + 1+abs(min(df$lat))
+#df$z.lon <- df$lon + 1+abs(min(df$lon))
+#df$z.lat <- df$lat + 1+abs(min(df$lat))
 
 save(df, file = "code_output/electricity_dhs_w_covariates.RData")
