@@ -48,7 +48,7 @@ stack.test <- inla.stack(data = list(y = NA),
                                         list(ntl = test.survey$z.ntl),
                                         list(population = test.survey$z.pop2010),
                                         list(year = test.survey$z.year),
-                                        list(epsilon = 1:nrow(test.survey))),
+                                        list(epsilon = meta$num$data + 1:nrow(test.survey))),
                          tag = "test")
 
 
@@ -67,7 +67,8 @@ m <- inla(predictor,
           control.predictor = list(A = inla.stack.A(stack.all),
                                    compute = TRUE),
           control.compute = list(cpo = TRUE, dic = TRUE, config = TRUE),#)
-          control.inla = list(strategy = "laplace", npoints = 21))
+          control.inla = list(strategy = "laplace", npoints = 101, diff.logdens = 4))
+          #control.inla = list(strategy = "grid", diff.logdens = 4))
 
 summary(m)
 
@@ -106,6 +107,19 @@ m12 <- sum(test.survey$r > .5 & predicted.test.mean <= .9)
 (m11 + m22)/(m11 + m22 + m21 + m12)
 
 plot(df$z.ntl,inla.link.invlog(df$r))
+
+plot(m, plot.fixed.effects = FALSE,
+     plot.lincomb = FALSE,
+     plot.random.effects = FALSE,
+     plot.hyperparameters = TRUE,
+     plot.predictor = FALSE,
+     plot.q = FALSE,
+     plot.cpo = FALSE)
+
+graphics.off()
+
+plot(m)
+
 #ggplot(subset(df, year == 2009), aes(lon, lat)) + geom_point(aes(col = r), pch = 16)
 #ggplot(subset(df, year == 2010), aes(lon, lat)) + geom_point(aes(col = r), pch = 16)
 #ggplot(subset(df, year == 2011), aes(lon, lat)) + geom_point(aes(col = r), pch = 16)

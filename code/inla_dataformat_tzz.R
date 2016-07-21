@@ -6,7 +6,7 @@
 library(INLA)
 library(raster)
 
-
+graphics.off()
 rm(list = ls())
 load("code_output/electricity_dhs_w_covariates.RData")
 survey.iso3 <- unique(df$iso3)
@@ -37,14 +37,14 @@ df$z.ntl <- log(1+df$ntl)
 
 
 # Delete this lines
-countries <- c("TZA", "ZMB", "ZWE")
-df <- subset(df, iso3 %in% countries)
+#countries <- c("TZA", "ZMB", "ZWE")
+#df <- subset(df, iso3 %in% countries)
 ix <- sample(seq(nrow(df)), nrow(df))
-test.survey <- df[ix[1101:nrow(df)],]
-df <- df[ix[1:1100],]
+#test.survey <- df[ix[1101:nrow(df)],]
+#df <- df[ix[1:1100],]
 
-#test.survey <- df[ix[2001:4000],]
-#df <- df[ix[1:2000],]
+test.survey <- df[ix[601:1200],]
+df <- df[ix[1:600],]
 nrow(test.survey)
 nrow(df)
 
@@ -71,8 +71,8 @@ afr.xy <- as.matrix(rbind(df[,c("lon", "lat")],test.survey[,c("lon", "lat")]))
 #afr.xy <- afr.xy[afr.z < 100, ]
 #afr.xy <- afr.xy[sample(seq(nrow(afr.xy)), 3000), ]
 bound <- inla.nonconvex.hull(afr.xy, convex = 2.5, concave = 2.5)
-mesh.s <- inla.mesh.2d(boundary = bound, max.edge = 1.5, cutoff = 1)
-#mesh.s <- inla.mesh.2d(boundary = bound, max.edge = 3.5, cutoff = 3)
+#mesh.s <- inla.mesh.2d(boundary = bound, max.edge = 1.5, cutoff = 1)
+mesh.s <- inla.mesh.2d(boundary = bound, max.edge = c(5, 6), cutoff = 3)
 afr.spde <- inla.spde2.matern(mesh = mesh.s, alpha = 2)
 plot(mesh.s)
 #points(afr.xy[,1],afr.xy[,2], col = "red", pch = 16)
