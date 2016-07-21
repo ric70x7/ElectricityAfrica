@@ -1,7 +1,7 @@
 # DHS data pre-process
 # --------------------
 #
-# Edited: June 29, 2016
+# Edited: July 21, 2016
 
 
 # Load data
@@ -95,3 +95,10 @@ survey.data.agg$r <- survey.data.agg$has_electricity/survey.data.agg$total
 
 
 save(survey.data.agg, file = "code_output/electricity_dhs.RData")
+
+# List of surveys used
+all.countries <- unique(survey.data$ISO3)
+afr.countries <- unique(survey.data.agg$iso3)
+surveys <- survey.data[survey.data$ISO3 %in% afr.countries, c("SurveyID", "Country", "ISO3", "Year")]
+surveys <- unique(surveys)
+write.csv(surveys, "code_output/surveys_in_dhs_preporcess.csv")
