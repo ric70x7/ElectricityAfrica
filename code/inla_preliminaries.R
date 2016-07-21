@@ -21,7 +21,7 @@ if(split.data){
   ix <- sample(seq(nrow(df)), nrow(df))
   #df.test <- df[ix[1101:nrow(df)],]
   #df <- df[ix[1:1100],]
-  df.test <- df[ix[601:900],]
+  df.test <- df[ix[601:1000],]
   df <- df[ix[1:250],]
 }
 
@@ -47,7 +47,9 @@ plot(mesh.s)
 points(df$lon, df$lat, pch = 16, col = "blue", cex = 1)
 graphics.off()
 
-afr.spde <- inla.spde2.matern(mesh = mesh.s, alpha = 2)
+afr.spde <- inla.spde2.matern(mesh = mesh.s,
+                              alpha = 2,
+                              fractional.method = "null")
 # Indices associated to the observations
 meta$num$data <- nrow(df)
 meta$points$time <- df$year
