@@ -7,8 +7,8 @@
 graphics.off()
 rm(list = ls())
 source("code/inla_preliminaries.R")
-plot(mesh.s)
-points(df$lon, df$lat, pch = 16, col = "blue", cex = 1)
+#plot(mesh.s)
+#points(df$lon, df$lat, pch = 16, col = "blue", cex = 1)
 
 # Predictor
 predictor <- y ~ -1 + intercept +
@@ -90,14 +90,14 @@ for(i in seq(nrow(df))){
   predicted.train.mean[i] <- inla.emarginal(inla.link.invlogit,
                                             m$marginals.linear.predictor[meta$ix$stack$obsv][[i]] )
 }
-plot(df$r, predicted.train.mean )
+#plot(df$r, predicted.train.mean )
 
 predicted.test.mean <- c()
 for(i in seq(nrow(df.test))){
   predicted.test.mean[i] <- inla.emarginal(inla.link.invlogit,
                                             m$marginals.linear.predictor[meta$ix$stack$test][[i]] )
 }
-plot(df.test$r, predicted.test.mean )
+#plot(df.test$r, predicted.test.mean )
 
 m11 <- sum(df.test$r <= .5 & predicted.test.mean <= .9)
 m22 <- sum(df.test$r > .5 & predicted.test.mean > .9)
