@@ -3,7 +3,7 @@
 #
 # Edited: July 20, 2016
 
-
+library(ggplot2)
 graphics.off()
 rm(list = ls())
 source("code/inla_preliminaries.R")
@@ -97,7 +97,8 @@ for(i in 1:2){
             family = "binomial",
             Ntrials = c(df$total, rep(1, num.test)),
             control.predictor = list(A = inla.stack.A(stack.all),
-                                     compute = TRUE))#, control.inla = list(strategy = "laplace", npoints = 21),
+                                     compute = TRUE),
+            quantiles = NULL)#, control.inla = list(strategy = "laplace", npoints = 21),
             #verbose = TRUE)
   
   
@@ -110,3 +111,5 @@ for(i in 1:2){
   predictions[[i]] <- data.frame(pixel = df.test$pixel, lon = df.test$lon, lat = df.test$lat, r = predicted.test.mean)
   
 }
+
+ggplot(predictions[[1]], aes(lon, lat)) + geom_tile(aes(fill = r))
