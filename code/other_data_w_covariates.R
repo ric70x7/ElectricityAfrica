@@ -40,7 +40,6 @@ df.test$pop2010 <- getValues(pop2010)[pixels]
 
 # Standardize/transform values
 load("code_output/z_params.RData")
-
 df.test$z.year <- scale(df.test$year, center = center.year, scale = scale.year)
 df.test$z.pop2010 <- log(1+df.test$pop2010)
 df.test$z.ntl <- log(1+df.test$ntl)

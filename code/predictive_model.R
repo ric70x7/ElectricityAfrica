@@ -2,7 +2,7 @@
 # --------------------
 #
 # Edited: July 21, 2016
-# This is the core file (train and test with non obfuscated data)
+# This file makes a prediction 
 
 
 graphics.off()

@@ -14,13 +14,13 @@ survey.iso3 <- unique(df$iso3)
 
 xy <- df[, c("lon", "lat")]
 
-#  countries <- c("MWI", "ZMB")
-#  df <- subset(df, iso3 %in% countries)
-#  ix <- sample(seq(nrow(df)), nrow(df))
-#  #df.test <- df[ix[1101:nrow(df)],]
-#  #df <- df[ix[1:1100],]
-#  df.test <- df[ix[601:1000],]
-#  df <- df[ix[1:250],]
+#countries <- c("MWI", "ZMB")
+#df <- subset(df, iso3 %in% countries)
+  ix <- sample(seq(nrow(df)), nrow(df))
+#df.test <- df[ix[1101:nrow(df)],]
+  df <- df[ix[1:1100],]
+#df.test <- df[ix[601:1000],]
+#df <- df[ix[1:250],]
 
 # Define a list to store metadata
 meta <- list()
