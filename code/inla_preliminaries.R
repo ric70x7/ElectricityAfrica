@@ -7,8 +7,8 @@
 library(INLA)
 library(raster)
 
-graphics.off()
-rm(list = ls())
+#graphics.off()
+#rm(list = ls())
 load("code_output/electricity_dhs_w_covariates.RData")
 survey.iso3 <- unique(df$iso3)
 
@@ -16,9 +16,9 @@ xy <- df[, c("lon", "lat")]
 
 #countries <- c("MWI", "ZMB")
 #df <- subset(df, iso3 %in% countries)
-  ix <- sample(seq(nrow(df)), nrow(df))
+#  ix <- sample(seq(nrow(df)), nrow(df))
 #df.test <- df[ix[1101:nrow(df)],]
-  df <- df[ix[1:1100],]
+#  df <- df[ix[1:1100],]
 #df.test <- df[ix[601:1000],]
 #df <- df[ix[1:250],]
 
@@ -35,8 +35,8 @@ mesh.t <- inla.mesh.1d(loc = df$year,
 
 
 # Spatial mesh
-bound <- inla.nonconvex.hull(as.matrix(xy), convex = -.08, concave = -.28)
-mesh.s <- inla.mesh.2d(boundary = bound, max.edge = 2.5, cutoff = 2.0)
+bound <- inla.nonconvex.hull(as.matrix(xy), convex = -.15, concave = -.5)
+mesh.s <- inla.mesh.2d(boundary = bound, max.edge = 2, cutoff = 1.5)
 #plot(mesh.s)
 #points(xy[,1],xy[,2], col = "red", pch = 16)
 afr.spde <- inla.spde2.matern(mesh = mesh.s, alpha = 2)
