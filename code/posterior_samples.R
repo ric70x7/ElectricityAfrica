@@ -64,7 +64,7 @@ for(i in seq(z.year)){
 
 
 # Posterior samples
-num.samples <- 1000#0
+num.samples <- 300# FIXME: change to 10000
 post.samples <- inla.posterior.sample(n = num.samples, result = m_core)
 
 
@@ -97,139 +97,73 @@ A.latn <- inla.spde.make.A(mesh = mesh.s,
 
 # Function to recover a sample of inv.link.logit(eta)
 boot.predictor <- function(slices, time.point){
-  return(rowSums(inla.link.invlogit(
-           beta.i.samples[slices] +
-           beta.y.samples[slices] * z.year[[time.point]] +
-           beta.p.samples[slices] * z.pop2010 +
-           beta.n.samples[slices] * z.ntl[[time.point]] +
-           as.matrix(A.latn %*% t(rand.u.samples[slices,]))))/length(slices))
+  eta <- as.matrix(A.latn %*% t(rand.u.samples[slices,]))
+  eta <- t(t(eta) +
+             beta.i.samples[slices] +
+             beta.y.samples[slices] * z.year[[time.point]])
+  eta <- eta + t(matrix(rep(z.pop2010, ncol(eta)),
+                        nrow = ncol(eta),
+                        byrow = TRUE) * beta.p.samples[slices])
+  eta <- eta + t(matrix(rep(z.ntl[[time.point]], ncol(eta)),
+                        nrow = ncol(eta),
+                        byrow = TRUE) * beta.n.samples[slices])
+  return(rowMeans(inla.link.invlogit(eta)))
 }
 
+#aux <- boot.predictor(slices = slices.list[[1]], time.point = 3)
+#length(aux)
 
-# List of slices to parallelize
-slices.list <- list()
-for(i in 1:1000){
-  slices.list[[i]] <- (i-1)*100 + 1:100
+# Definition of settings to parallelize
+num.cores <- 3 # FIXME: change to 10
+batch.size <- 100 # FIXME: change to 1000
+num.slices <- num.samples/batch.size
+
+slices.list <- c()
+for(i in 1:num.slices){
+  slices.list[[i]] <- (i-1) * batch.size + 1:batch.size
 }
-slices <- slices.list[[2]]
-
-boot.predictor(slices.list[[23]], time.point = 15)
 
 
 # Parallel processing
-expected <- rep(0, sum(afr.mask))
-num.cores <- 3#FIXME
-for(tp in 1:16){
+map.values <- list()
+i <- 1 #FIXME: delete this line
+#for(i in 1:16){
   cl <- makeCluster(num.cores)
   registerDoParallel(cl)
-  expected <- 
-  for
-}
+  expected <- foreach(from = slices.list, 
+                      .combine = cbind,
+                      .packages = c("INLA")) %dopar%{
+                        boot.predictor(from, time.point = i)
+                      }
+  stopCluster(cl)
+  map.values[[i]] <- rowMeans(expected)
+#}
 
 
+df.template <- data.frame(lon = afr.locs[,1],
+                          lat = afr.locs[,2],
+                          pixel = seq(afr.locs[,1]),
+                          year = NA,
+                          r = NA)
+df.predicted <- data.frame()
 
+#for(tp in 1:16){
+  df.i <- df.template
+  df.i$year <- 1999 + i
+  df.i$r[afr.mask] <- map.values[[i]]
+  
+  df.predicted <- rbind(df.predicted, df.i)
+#}
 
-expected <- rep(0, sum(afr.mask))
-#for(i in seq(1, num.samples, 100)){
-batch.size <- 100
-for(i in seq(1, 10000, batch.size)){
-  partial <- rep(0, sum(afr.mask))
-  #for(j in i:(i+batch.size-1)){
-  for(j in 1:100){
-  partial <- partial + boot.eta(j,
-                                z.year = z.year[1],
-                                z.pop = z.pop,
-                                z.ntl = z.ntl)
-  }
-  print(i)
-  expected <- expected + partial/batch.size
-}
-expected <- expected/length(seq(1, 10000, batch.size))
 
 
 
 #####################################33
 
-
-
-# Functions to extract samples
-boot.i <- function(nrows = sum(afr.mask), nsamples = num.samples){
-  return(matrix(rep(beta.i.samples[1:nsamples], nrows),
-                ncol = nsamples,
-                byrow = TRUE))
-}
-
-boot.y <- function(z.year, nrows = sum(afr.mask), nsamples = num.samples){
-  # NOTE z.year must be a scalar
-  return(z.year * matrix(rep(beta.y.samples[1:nsamples], nrows),
-                       ncol = nsamples,
-                       byrow = TRUE))
-}
-
-boot.p <- function(z.pop, nrows = sum(afr.mask), nsamples = num.samples){
-  # NOTE z.pop must be a vector of lenght nrows
-  return(z.pop * matrix(rep(beta.p.samples[1:nsamples], nrows),
-                       ncol = nsamples,
-                       byrow = TRUE))
-}
-
-boot.n <- function(z.ntl, nrows = sum(afr.mask), nsamples = num.samples){
-  # NOTE z.ntl must be a vector of lenght nrows
-  return(z.ntl * matrix(rep(beta.n.samples[1:nsamples], nrows),
-                       ncol = nsamples,
-                       byrow = TRUE))
-}
-  
-boot.u <- function(u, nrows = sum(afr.mask), nsamples = num.samples){
-  # NOTE z.ntl must be a vector of lenght nrows
-  return(z.ntl * matrix(rep(beta.n.samples[1:nsamples], nrows),
-                       ncol = nsamples,
-                       byrow = TRUE))
-}
-  
-
-# Projector matrix to interpolate the latent variable
-A.latn <- inla.spde.make.A(mesh = mesh.s,
-                           loc = as.matrix(afr.locs[afr.mask,]))
-
-
-# Project field in the exponentiated space
-rand.g.samples <- exp(rand.u.samples) # g = exp(u)
-g.nodes <- apply(rand.g.samples, 2, mean)
-g.field <- as.vector(A.latn %*% g.nodes)
-
-
-
-
-# Expected exp(beta_1 * year)
-gamma.yx <- c()
-for(i in 1:num.layers){
-  z.year <- (1999 + i - center.year)/scale.year
-  gamma.yx[i] <- mean(exp(beta.y.samples * z.year))
-}
-
-# Expected exp(beta_2 * population)
-z.pop2010 <- log(1 + pop2010.x[afr.mask])
-expand.z.pop <- matrix(rep(z.pop2010, num.layers), ncol = num.samples, byrow = FALSE)
-length(beta.p.samples)
-length(z.pop2010)
-
-# Expected exp(beta_3 * ntl)
-for ....
-
-aux <- runif(100,1,10)
-maux <- mean(aux)
-ea1 <- mean(aux/(1+aux))
-ea2 <- maux/(1+maux)
-
-
-#}  
-
 library(ggplot2)
 
-plot(afr.locs[afr.mask,1][pick], afr.locs[afr.mask,2][pick], pch = 16, col = "gray")
 
-ggplot(dfr, aes(lon, lat)) + geom_raster(aes(fill = u))
+ggplot(df.predicted[!is.na(r)], aes(lon, lat)) + geom_raster(aes(fill = u))
 
 
 dfr <- data.frame(lon = mesh.s$loc[,1],
