@@ -126,8 +126,8 @@ for(i in 1:num.slices){
 
 # Parallel processing
 map.values <- list()
-i <- 1 #FIXME: delete this line
-#for(i in 1:16){
+#i <- 1 #FIXME: delete this line
+for(i in 1:16){
   cl <- makeCluster(num.cores)
   registerDoParallel(cl)
   expected <- foreach(from = slices.list, 
@@ -137,7 +137,7 @@ i <- 1 #FIXME: delete this line
                       }
   stopCluster(cl)
   map.values[[i]] <- rowMeans(expected)
-#}
+}
 
 
 df.template <- data.frame(lon = afr.locs[,1],
@@ -145,42 +145,82 @@ df.template <- data.frame(lon = afr.locs[,1],
                           pixel = seq(afr.locs[,1]),
                           year = NA,
                           r = NA)
-df.predicted <- data.frame()
 
-#for(tp in 1:16){
+df.predicted <- data.frame()
+for(i in 1:16){
   df.i <- df.template
   df.i$year <- 1999 + i
   df.i$r[afr.mask] <- map.values[[i]]
   
   df.predicted <- rbind(df.predicted, df.i)
-#}
+}
 
 
 
-
-#####################################33
+#####################################
 
 library(ggplot2)
+library(ggthemes)
+library(viridis)
+
+pltyear <- 1999 + 16
+ggplot(df.predicted[!is.na(df.predicted$r) & df.predicted$year == pltyear,], aes(lon, lat)) +
+    #geom_raster(aes(fill = log(r))) +
+    geom_raster(aes(fill = r)) +
+    coord_equal() +
+    theme_map() +
+    theme(legend.position = "bottom", legend.key.width = unit(2, "cm")) +
+    scale_fill_viridis(limits = c(0, 1), guide = guide_colorbar(title = paste("access", pltyear, sep = " ")))
+    #scale_fill_viridis(guide = guide_colorbar(title = paste("access", pltyear, sep = " ")))
+graphics.off()
 
 
-ggplot(df.predicted[!is.na(r)], aes(lon, lat)) + geom_raster(aes(fill = u))
+
+##### Sanity check
+
+load("code_output/other_data_w_covariates.RData")
+
+predicted.test.mean <- c()
+for(i in seq(nrow(df.test))){
+  predicted.test.mean[i] <- inla.emarginal(inla.link.invlogit,
+                                            m_core$marginals.linear.predictor[meta_core$ix$stack$test][[i]] )
+}
+df.test$r <- df.test$electricity
+plot(df.test$r, predicted.test.mean)
 
 
-dfr <- data.frame(lon = mesh.s$loc[,1],
-                  lat = mesh.s$loc[,2],
-                  u = rand.u.samples[50,])
-ggplot(dfr, aes(lon, lat)) + geom_point(aes(col = u), size = 5)
+head(df.test)
 
+y.validation <- 2010
+A.validation <- inla.spde.make.A(mesh = mesh.s,
+                                 loc = as.matrix(df.test[df.test$year==y.validation,c("lon","lat")]))
+dim(A.validation)
+zz.y <- df.test$z.year[df.test$year==y.validation][1]
 
-pick <- 100000:300000
-g.field <-  as.vector(A.latn %*% rand.u.samples[50,])
-dfg <- data.frame(lon = afr.locs[afr.mask,1][pick],
-                  lat = afr.locs[afr.mask,2][pick],
-                  g = g.field[pick])
+# Function to recover a sample of inv.link.logit(eta)
+eta <- as.matrix(A.validation %*% t(rand.u.samples))
+eta <- t(t(eta) +
+           beta.i.samples +
+           beta.y.samples * zz.y)
+eta <- eta + t(matrix(rep(df.test$z.pop2010[df.test$year==y.validation], ncol(eta)),
+                      nrow = ncol(eta),
+                      byrow = TRUE) * beta.p.samples)
+eta <- eta + t(matrix(rep(df.test$z.ntl[df.test$year==y.validation], ncol(eta)),
+                      nrow = ncol(eta),
+                      byrow = TRUE) * beta.n.samples)
+eta.mean <- rowMeans(eta)
+output.mean <- rowMeans(inla.link.invlogit(eta))
 
+plot(m_core$summary.fitted.values$mean[meta_core$ix$stack$test][df.test$year==y.validation],
+     eta.mean)
 
-ggplot(dfr, aes(lon, lat)) + geom_point(aes(col = u), size = 5) +
-geom_point(data = dfg, aes(lon, lat, col = g))
+plot(predicted.test.mean[df.test$year==y.validation], inla.link.invlogit(eta.mean), col = "blue", pch = 16, cex=.1) 
+points(predicted.test.mean[df.test$year==y.validation], output.mean, col = "red", pch = 16, cex = .1)
 
+plot(inla.link.invlogit(eta.mean), output.mean)
+      
+points(.5,.5,pch=16, col="red")
+lines(c(0,1), c(0,1), col= "red")
 
+length(predicted.test.mean)
 graphics.off()

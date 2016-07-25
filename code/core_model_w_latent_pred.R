@@ -8,7 +8,7 @@
 graphics.off()
 rm(list = ls())
 source("code/inla_preliminaries.R")
-load("code_output/prediction_locations.RData")
+#load("code_output/prediction_locations.RData")
 
 
 # Predictor
