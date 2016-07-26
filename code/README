@@ -1,0 +1,22 @@
+Files content and chronological order
+-------------------------------------
+Edite July 25, 2016
+
+
+1) dhs_preprocess.R
+   Clean DHS surveys and organize them in a data frame
+   
+2) additional_surveys_preprocess.R
+   Put surveys, appart form DHS, in a data frame
+   
+3) dhs_w_covariates.R
+   Add covariates to data frame with DHS data
+   
+4) other_data_w_covariates.R
+   Add covariates to data frame with additional surveys
+   
+5) inla_preliminaries.R
+   Define mesh and data indices
+   
+6) core_model_w_latent_pred.R
+   Code for running INLA
