@@ -1,7 +1,7 @@
 # Geostatistical model
 # --------------------
 #
-# Edited: July 25, 2016
+# Edited: July 26, 2016
 # This is the core file (train and test with non obfuscated data)
 
 
@@ -87,66 +87,3 @@ m <- inla(predictor,
 m_core <- m
 meta_core <- meta
 save(mesh.s, m_core, meta_core, file = "code_output/geos1/core_latent_interpolation.RData")
-
-
-
-
-
-## Marginal predictions
-#predicted.train.mean <- c()
-#for(i in seq(nrow(df))){
-#  predicted.train.mean[i] <- inla.emarginal(inla.link.invlogit,
-#                                            m$marginals.linear.predictor[meta$ix$stack$obsv][[i]] )
-#}
-##plot(df$r, predicted.train.mean)
-#
-#
-#predicted.test.mean <- c()
-#for(i in seq(nrow(df.test))){
-#  predicted.test.mean[i] <- inla.emarginal(inla.link.invlogit,
-#                                            m$marginals.linear.predictor[meta$ix$stack$test][[i]] )
-#}
-#df.test$r <- df.test$electricity
-##plot(df.test$r, predicted.test.mean)
-#
-#
-#
-#
-#
-#A.latn <- inla.spde.make.A(mesh = mesh.s,
-#                           loc = as.matrix(df.latn[, c("lon", "lat")]))
-#
-#num.samples <- 1000
-#post.samples <- inla.posterior.sample(n = num.samps, result = m)
-#
-#obj.names <- rownames(post.samples[[1]]$latent)
-#u.batch <- grepl("u.field", obj.names)
-#
-#
-#u.samples <- matrix(NA, nrow = num.samps, ncol = num.latn)
-#for(i in 1:num.samps){
-#  u.samples[i,] <- post.samps[[i]]$latent[u.batch]
-#}
-#
-#u.mean <- apply(u.samples, 2, mean)
-#new.field <-  A.latn %*% u.mean
-#
-#df.latn$gp <- as.vector(new.field) + m$summary.fixed["intercept", "mean"]
-#
-#
-#
-##df.latn$gp <- m$summary.fitted.values$mean[meta$ix$stack$latn]
-#library(ggplot2)
-#ggplot(df.latn, aes(lon, lat)) + geom_raster(aes(fill = gp)) +
-#  geom_point(data = df.test, aes(lon, lat, col = r)) +
-#  geom_point(data = df, aes(lon, lat, col = r))
-#
-
-
-
-#m11 <- sum(df.test$r <= .5 & predicted.test.mean <= .5)
-#m22 <- sum(df.test$r > .5 & predicted.test.mean > .5)
-#m21 <- sum(df.test$r <= .5 & predicted.test.mean > .5)
-#m12 <- sum(df.test$r > .5 & predicted.test.mean <= .5)
-#(m11 + m22)/(m11 + m22 + m21 + m12)
-#plot(m)

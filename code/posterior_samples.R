@@ -23,22 +23,23 @@ load("code_output/geos1/core_latent_interpolation.RData")
 # Prediction grid and covarirates values
 num.layers <- 16
 
+
 # NTL
 ntl2010 <- raster(paste("data/ntl/Inland_water_masked_5k/ts2010W_template.tif", sep = ""))
 ntl2010.x <- getValues(ntl2010)
 
 
 # Population 2010
-pop2010 <- raster("data/Population/GPW3_2010.tif")
+pop2010 <- raster("code_output//Population/GPW3_2010.tif")
 pop2010.x <- getValues(pop2010)
 #pop2010.raw <- raster("data/Africa-POP-2010_africa2010ppp/africa2010ppp.tif")
 #pop2010 <- resample(pop2010.raw, ntl2010)
 #pop2010.x <- getValues(pop2010)
-pop.years <- seq(2000, 2015, 5)
-pop.list <- list(raster("data/Population/GPW3_2000.tif"),
-                 raster("data/Population/GPW3_2005.tif"),
-                 raster("data/Population/GPW3_2010.tif"),
-                 raster("data/Population/GPW3_2015.tif"))
+#pop.years <- seq(2000, 2015, 5)
+#pop.list <- list(raster("data/Population/GPW3_2000.tif"),
+#                 raster("data/Population/GPW3_2005.tif"),
+#                 raster("data/Population/GPW3_2010.tif"),
+#                 raster("data/Population/GPW3_2015.tif"))
 
 # Whole grid
 afr.locs <- xyFromCell(ntl2010, seq(ntl2010))
@@ -69,28 +70,32 @@ for(i in seq(z.year)){
   z.ntl[[i]] <- log(1+getValues(ntlraster)[afr.mask])
   
   # Population
-  if(yi < 2005){
-    fa <- 1
-    fb <- 2
-  }else{
-    if(yi < 2010){
-      fa <- 2
-      fb <- 3
-    }else{
-      if(yi < 2015){
-        fa <- 3
-        fb <- 4
-      }
-    }
-  }
-  a <- (pop.years[fb] - yi) * .2
-  b <- 1 - a
-  z.pop[[i]] <- log(1 + a * getValues(pop.list[[fa]])[afr.mask] + b * getValues(pop.list[[fb]])[afr.mask])
+  popfilename <- paste("code_output/Population/GPW3_", yi, ".tif", sep = "") #5Km resolution
+  popraster <- raster(popfilename)
+  z.pop[[i]] <- log(1+getValues(popraster)[afr.mask])
+  
+  #if(yi < 2005){
+  #  fa <- 1
+  #  fb <- 2
+  #}else{
+  #  if(yi < 2010){
+  #    fa <- 2
+  #    fb <- 3
+  #  }else{
+  #    if(yi < 2015){
+  #      fa <- 3
+  #      fb <- 4
+  #    }
+  #  }
+  #}
+  #a <- (pop.years[fb] - yi) * .2
+  #b <- 1 - a
+  #z.pop[[i]] <- log(1 + a * getValues(pop.list[[fa]])[afr.mask] + b * getValues(pop.list[[fb]])[afr.mask])
 }
 
 
 # Posterior samples
-num.samples <- 10000#300# FIXME: change to 10000
+num.samples <- 300# FIXME: change to 10000
 post.samples <- inla.posterior.sample(n = num.samples, result = m_core)
 
 
@@ -144,8 +149,8 @@ boot.predictor <- function(slices, time.point){
 #length(aux)
 
 # Definition of settings to parallelize
-num.cores <- 10#3 # FIXME: change to 10
-batch.size <- 1000#100 # FIXME: change to 1000
+num.cores <- 3 # FIXME: change to 10
+batch.size <- 100 # FIXME: change to 1000
 num.slices <- num.samples/batch.size
 
 slices.list <- c()
@@ -195,6 +200,7 @@ for(i in 1:16){
 library(ggplot2)
 library(ggthemes)
 library(viridis)
+library(animation)
 
 df.template <- data.frame(lon = afr.locs[,1],
                           lat = afr.locs[,2],
@@ -211,10 +217,10 @@ for(i in 1:16){
   df.predicted <- rbind(df.predicted, df.i)
 }
 
-save(map.values, df.predicted, "code_output/predicted_data.RData")
+save(map.values, df.predicted, "code_output/geos1/predicted_data.RData")
 
-#for(i in 1:16){
-ggdraw <- function(i){
+for(i in 1:16){
+#ggdraw <- function(i){
   pltyear <- 1999 + i
   plt <- ggplot(df.predicted[!is.na(df.predicted$r) & df.predicted$year == pltyear,], aes(lon, lat)) +
       #geom_raster(aes(fill = log(r))) +
@@ -223,14 +229,17 @@ ggdraw <- function(i){
       theme_map() +
       theme(legend.position = "bottom", legend.key.width = unit(2, "cm")) +
       scale_fill_viridis(limits = c(0, 1), guide = guide_colorbar(title = paste("electricity access", pltyear, sep = " ")))
-  #ggsave(filename = paste("code_output/geos1/access_", pltyear, ".png", sep = ""), plt)
+  ggsave(filename = paste("code_output/geos1/access_", pltyear, ".png", sep = ""), plt)
+  #print(plt)
 }
 
 ggfunk <- function(){
   lapply(1:16, function(x) ggdraw(x))
 }
 
-saveGIF(ggfunk, interval = .3, movie.name = "electricity_access.gif")
+ani.options(convert = 'C:\\Program Files\\ImageMagick-7.0.2-Q16\\convert.exe')
+saveGIF(ggfunk(), interval = .3, movie.name = "code_output/geos1/electricity_access.gif")
+
 
 ##### Sanity check
 

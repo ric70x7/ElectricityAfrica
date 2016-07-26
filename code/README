@@ -9,6 +9,10 @@ Edite July 25, 2016
 2) additional_surveys_preprocess.R
    Put surveys, appart form DHS, in a data frame
    
+3) interpolate_population.R   
+   Create layers of population 2001-2004, 2006-2009, 2011-2014 by interpolating
+   the available data 2000, 2005, 2010, 2015
+   
 3) dhs_w_covariates.R
    Add covariates to data frame with DHS data
    

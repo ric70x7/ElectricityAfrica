@@ -12,20 +12,17 @@ load("code_output/electricity_dhs.RData")
 
 
 # Aggregate survey data by pixel
-#filename <- paste("data/ntl/TSwater/ts", 2010, "W.tif", sep = "") #1Km resolution
 filename <- paste("data/ntl/Inland_water_masked_5k/ts2010W_template.tif") #5Km resolution
 afr <- raster(filename)
 survey.data.agg$pixel <- cellFromXY(afr, survey.data.agg[, c("lon", "lat")])
 
 df <- aggregate.data.frame(survey.data.agg$total,
                            by = survey.data.agg[, c("country", "iso3", "year", "pixel")],
-                           #by = survey.data.agg[, c("year", "pixel")],
                            FUN = sum)
 colnames(df)[5] <- "total"
 
 df$has_electricity <- aggregate.data.frame(survey.data.agg$has_electricity,
                                            by = survey.data.agg[, c("country", "iso3", "year", "pixel")],
-                                           #by = survey.data.agg[, c("year", "pixel")],
                                            FUN = sum)[,5]
   
 df$r <- df$has_electricity/df$total
@@ -34,12 +31,13 @@ df$lon <- coords[,1]
 df$lat <- coords[,2]
 
 
+# Time points in data
+years <- sort(unique(df$year))
+
 # Add NTL data to the dataframe
 df$ntl <- NA
-years <- sort(unique(df$year))
 for(yi in years[1:13]){
   mask <- df$year == yi
-  #filename <- paste("data/ntl/TSwater/ts", yi, "W.tif", sep = "") #1km resolution
   filename <- paste("data/ntl/Inland_water_masked_5k/ts", yi, "W_template.tif", sep = "") #5Km resolution
   afr <- raster(filename)
   pixels <- cellFromXY(afr, df[mask, c("lon", "lat")])
@@ -47,7 +45,6 @@ for(yi in years[1:13]){
 }
 # Repeat values of 2013 in 2014
 mask <- df$year == 2014
-#filename <- paste("data/ntl/TSwater/ts", yi, "W.tif", sep = "") #1km resolution
 filename <- paste("data/ntl/Inland_water_masked_5k/ts", yi, "W_template.tif", sep = "") #5Km resolution
 afr <- raster(filename)
 pixels <- cellFromXY(afr, df[mask, c("lon", "lat")])
@@ -55,34 +52,42 @@ df$ntl[mask] <- getValues(afr)[pixels]
 
 
 # Add population data to the dataframe
-pop.list <- list(raster("data/Population/GPW3_2000.tif"),
-                 raster("data/Population/GPW3_2005.tif"),
-                 raster("data/Population/GPW3_2010.tif"),
-                 raster("data/Population/GPW3_2015.tif"))
-years <- sort(unique(df$year))
-pop.years <- c(2000, 2005, 2010, 2015)
+df$pop <- NA
 for(yi in years){
   mask <- df$year == yi
-  pixels <- cellFromXY(pop.list[[1]], df[mask, c("lon", "lat")]) # Pixels are the same across pop files
-  if(yi < 2005){
-    fa <- 1
-    fb <- 2
-  }else{
-    if(yi < 2010){
-      fa <- 2
-      fb <- 3
-    }else{
-      if(yi < 2015){
-        fa <- 3
-        fb <- 4
-      }
-    }
-  }
-  a <- (pop.years[fb] - yi) * .2
-  b <- 1 - a
-  df$pop[mask] <- a * getValues(pop.list[[fa]])[pixels] + b * getValues(pop.list[[fb]])[pixels]
-  
+  filename <- paste("code_output/Population/GPW3_", yi, ".tif", sep = "") #5Km resolution
+  afr <- raster(filename)
+  pixels <- cellFromXY(afr, df[mask, c("lon", "lat")])
+  df$pop[mask] <- afr[pixels]
 }
+#pop.list <- list(raster("data/Population/GPW3_2000.tif"),
+#                 raster("data/Population/GPW3_2005.tif"),
+#                 raster("data/Population/GPW3_2010.tif"),
+#                 raster("data/Population/GPW3_2015.tif"))
+#years <- sort(unique(df$year))
+#pop.years <- c(2000, 2005, 2010, 2015)
+#for(yi in years){
+#  mask <- df$year == yi
+#  pixels <- cellFromXY(pop.list[[1]], df[mask, c("lon", "lat")]) # Pixels are the same across pop files
+#  if(yi < 2005){
+#    fa <- 1
+#    fb <- 2
+#  }else{
+#    if(yi < 2010){
+#      fa <- 2
+#      fb <- 3
+#    }else{
+#      if(yi < 2015){
+#        fa <- 3
+#        fb <- 4
+#      }
+#    }
+#  }
+#  a <- (pop.years[fb] - yi) * .2
+#  b <- 1 - a
+#  df$pop[mask] <- a * getValues(pop.list[[fa]])[pixels] + b * getValues(pop.list[[fb]])[pixels]
+#  
+#}
 #pop2010.raw <- raster("data/Africa-POP-2010_africa2010ppp/africa2010ppp.tif")
 #pop2010 <- resample(pop2010.raw, afr)
 #pixels <- cellFromXY(pop2010, df[, c("lon", "lat")])
