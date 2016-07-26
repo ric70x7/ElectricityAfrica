@@ -1,7 +1,7 @@
 # Geostatistical model
 # --------------------
 #
-# Edited: July 22, 2016
+# Edited: July 25, 2016
 # This is the core file (train and test with non obfuscated data)
 
 
@@ -32,7 +32,7 @@ stack.obsv <- inla.stack(data = list(y = df$has_electricity),
                          A = list(A.obsv, 1, 1, 1, 1),
                          effects = list(c(u.f, list(intercept = 1)),
                                         list(ntl = df$z.ntl),
-                                        list(population = df$z.pop2010),
+                                        list(population = df$z.pop),
                                         list(year = df$z.year),
                                         list(epsilon = 1:meta$num$data)),
                          tag = "obsv")
@@ -47,7 +47,7 @@ stack.test <- inla.stack(data = list(y = NA),
                          A = list(A.test, 1, 1, 1, 1),
                          effects = list(c(u.f, list(intercept = 1)),
                                         list(ntl = df.test$z.ntl),
-                                        list(population = df.test$z.pop2010),
+                                        list(population = df.test$z.pop),
                                         list(year = df.test$z.year),
                                         list(epsilon = meta$num$data + 1:nrow(df.test))),
                          tag = "test")

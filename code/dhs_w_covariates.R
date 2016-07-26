@@ -1,7 +1,7 @@
 # Add covariates to surveys dataframe
 # -----------------------------------
 #
-# Edited: July 20, 2016
+# Edited: July 25, 2016
 # Covariates are also standardized/transformend
 
 rm(list = ls())
@@ -44,8 +44,6 @@ for(yi in years[1:13]){
   afr <- raster(filename)
   pixels <- cellFromXY(afr, df[mask, c("lon", "lat")])
   df$ntl[mask] <- afr[pixels]
-  #rowcol <- rowColFromCell(afr, pixels) 
-  #df$ntl[mask] <- afr[rowcol]
 }
 # Repeat values of 2013 in 2014
 mask <- df$year == 2014
@@ -57,21 +55,49 @@ df$ntl[mask] <- getValues(afr)[pixels]
 
 
 # Add population data to the dataframe
-pop2010.raw <- raster("data/Africa-POP-2010_africa2010ppp/africa2010ppp.tif")
-pop2010 <- resample(pop2010.raw, afr)
-pixels <- cellFromXY(pop2010, df[, c("lon", "lat")])
-df$pop2010 <- getValues(pop2010)[pixels]
+pop.list <- list(raster("data/Population/GPW3_2000.tif"),
+                 raster("data/Population/GPW3_2005.tif"),
+                 raster("data/Population/GPW3_2010.tif"),
+                 raster("data/Population/GPW3_2015.tif"))
+years <- sort(unique(df$year))
+pop.years <- c(2000, 2005, 2010, 2015)
+for(yi in years){
+  mask <- df$year == yi
+  pixels <- cellFromXY(pop.list[[1]], df[mask, c("lon", "lat")]) # Pixels are the same across pop files
+  if(yi < 2005){
+    fa <- 1
+    fb <- 2
+  }else{
+    if(yi < 2010){
+      fa <- 2
+      fb <- 3
+    }else{
+      if(yi < 2015){
+        fa <- 3
+        fb <- 4
+      }
+    }
+  }
+  a <- (pop.years[fb] - yi) * .2
+  b <- 1 - a
+  df$pop[mask] <- a * getValues(pop.list[[fa]])[pixels] + b * getValues(pop.list[[fb]])[pixels]
+  
+}
+#pop2010.raw <- raster("data/Africa-POP-2010_africa2010ppp/africa2010ppp.tif")
+#pop2010 <- resample(pop2010.raw, afr)
+#pixels <- cellFromXY(pop2010, df[, c("lon", "lat")])
+#df$pop2010 <- getValues(pop2010)[pixels]
 
 
 # Remove NA values
-df <- subset(df, !is.na(df$ntl) & df$ntl <= 120 & !is.na(df$pop2010) & !is.na(r))
+df <- subset(df, !is.na(df$ntl) & df$ntl <= 120 & !is.na(df$pop) & !is.na(r))
 
 
 ## Here come a bunch of heroic assumptions
 # No people => no households => no electricity
-mask <- df$r > 0 & df$ntl == 0 & df$pop2010 == 0
+mask <- df$r > 0 & df$ntl == 0 & df$pop == 0
 df$r[mask] <- 0
-df$pop2010[is.na(df$pop2010)] <- 0
+df$pop[is.na(df$pop)] <- 0
 
 
 # Standardize data
@@ -79,7 +105,7 @@ center.year <- mean(df$year)
 scale.year <- sd(df$year)
 df$z.year <- scale(df$year, center = center.year, scale = scale.year)
 
-df$z.pop2010 <- log(1+df$pop2010)
+df$z.pop <- log(1+df$pop)
 df$z.ntl <- log(1+df$ntl)
 
 #df$z.lon <- df$lon + 1+abs(min(df$lon))

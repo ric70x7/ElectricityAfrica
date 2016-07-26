@@ -1,7 +1,7 @@
 # Core model: predictions and interpolations
 # ------------------------------------------
 #
-# Edited: July 22, 2016
+# Edited: July 25, 2016
 # This is the core file (train and test with non obfuscated data)
 #
 # Predictor
@@ -24,17 +24,21 @@ load("code_output/geos1/core_latent_interpolation.RData")
 num.layers <- 16
 
 # NTL
-yi <- 2010
-filename <- paste("data/ntl/Inland_water_masked_5k/ts", yi, "W_template.tif", sep = "") #5Km resolution
-ntl2010 <- raster(filename)
+ntl2010 <- raster(paste("data/ntl/Inland_water_masked_5k/ts2010W_template.tif", sep = ""))
 ntl2010.x <- getValues(ntl2010)
 
 
 # Population 2010
-pop2010.raw <- raster("data/Africa-POP-2010_africa2010ppp/africa2010ppp.tif")
-pop2010 <- resample(pop2010.raw, ntl2010)
+pop2010 <- raster("data/Population/GPW3_2010.tif")
 pop2010.x <- getValues(pop2010)
-
+#pop2010.raw <- raster("data/Africa-POP-2010_africa2010ppp/africa2010ppp.tif")
+#pop2010 <- resample(pop2010.raw, ntl2010)
+#pop2010.x <- getValues(pop2010)
+pop.years <- seq(2000, 2015, 5)
+pop.list <- list(raster("data/Population/GPW3_2000.tif"),
+                 raster("data/Population/GPW3_2005.tif"),
+                 raster("data/Population/GPW3_2010.tif"),
+                 raster("data/Population/GPW3_2015.tif"))
 
 # Whole grid
 afr.locs <- xyFromCell(ntl2010, seq(ntl2010))
@@ -48,23 +52,45 @@ afr.mask <- ntl.mask & pop.mask
 
 # Covariates
 z.year <- as.list((2000:2015 - center.year)/scale.year)
-z.pop2010 <- log(1+pop2010.x[afr.mask])
+#z.pop2010 <- log(1+pop2010.x[afr.mask])
 z.ntl <- list()
+z.pop <- list()
 for(i in seq(z.year)){
+  
+  # NTL
   pred.year <- 1999 + i
   if(pred.year <= 2013){
     yi <- pred.year
   }else{
     yi <- 2013
   }
-  filename <- paste("data/ntl/Inland_water_masked_5k/ts", yi, "W_template.tif", sep = "") #5Km resolution
-  ntlraster <- raster(filename)
+  ntlfilename <- paste("data/ntl/Inland_water_masked_5k/ts", yi, "W_template.tif", sep = "") #5Km resolution
+  ntlraster <- raster(ntlfilename)
   z.ntl[[i]] <- log(1+getValues(ntlraster)[afr.mask])
+  
+  # Population
+  if(yi < 2005){
+    fa <- 1
+    fb <- 2
+  }else{
+    if(yi < 2010){
+      fa <- 2
+      fb <- 3
+    }else{
+      if(yi < 2015){
+        fa <- 3
+        fb <- 4
+      }
+    }
+  }
+  a <- (pop.years[fb] - yi) * .2
+  b <- 1 - a
+  z.pop[[i]] <- log(1 + a * getValues(pop.list[[fa]])[afr.mask] + b * getValues(pop.list[[fb]])[afr.mask])
 }
 
 
 # Posterior samples
-num.samples <- 300# FIXME: change to 10000
+num.samples <- 10000#300# FIXME: change to 10000
 post.samples <- inla.posterior.sample(n = num.samples, result = m_core)
 
 
@@ -97,13 +123,17 @@ A.latn <- inla.spde.make.A(mesh = mesh.s,
 
 # Function to recover a sample of inv.link.logit(eta)
 boot.predictor <- function(slices, time.point){
+  # latent variable
   eta <- as.matrix(A.latn %*% t(rand.u.samples[slices,]))
+  # intercept + year 
   eta <- t(t(eta) +
              beta.i.samples[slices] +
              beta.y.samples[slices] * z.year[[time.point]])
-  eta <- eta + t(matrix(rep(z.pop2010, ncol(eta)),
+  # population
+  eta <- eta + t(matrix(rep(z.pop[[time.point]], ncol(eta)),
                         nrow = ncol(eta),
                         byrow = TRUE) * beta.p.samples[slices])
+  # ntl
   eta <- eta + t(matrix(rep(z.ntl[[time.point]], ncol(eta)),
                         nrow = ncol(eta),
                         byrow = TRUE) * beta.n.samples[slices])
@@ -114,8 +144,8 @@ boot.predictor <- function(slices, time.point){
 #length(aux)
 
 # Definition of settings to parallelize
-num.cores <- 3 # FIXME: change to 10
-batch.size <- 100 # FIXME: change to 1000
+num.cores <- 10#3 # FIXME: change to 10
+batch.size <- 1000#100 # FIXME: change to 1000
 num.slices <- num.samples/batch.size
 
 slices.list <- c()
@@ -140,6 +170,32 @@ for(i in 1:16){
 }
 
 
+# Raster files
+template <- rep(NA, ntlraster@nrows * ntlraster@ncols)
+for(i in 1:16){
+  eaccess <- template
+  eaccess[afr.mask] <- map.values[[i]]
+  eaccess <- matrix(eaccess,
+                    ncol = ntlraster@ncols,
+                    nrow = ntlraster@nrows,
+                    byrow = TRUE)
+  eaccess <- raster(eaccess,
+                    xmn = ntlraster@extent@xmin,
+                    xmx = ntlraster@extent@xmax,
+                    ymn = ntlraster@extent@ymin,
+                    ymx = ntlraster@extent@ymax,
+                    crs = ntlraster@crs)
+  pltyear <- 1999 + i
+  filename <- paste("code_output/geos1/electricity_access_", pltyear, sep = "")
+  writeRaster(eaccess, filename, format = "GTiff", overwrite = TRUE)
+}
+
+#####################################
+# ggplots
+library(ggplot2)
+library(ggthemes)
+library(viridis)
+
 df.template <- data.frame(lon = afr.locs[,1],
                           lat = afr.locs[,2],
                           pixel = seq(afr.locs[,1]),
@@ -155,26 +211,26 @@ for(i in 1:16){
   df.predicted <- rbind(df.predicted, df.i)
 }
 
+save(map.values, df.predicted, "code_output/predicted_data.RData")
 
+#for(i in 1:16){
+ggdraw <- function(i){
+  pltyear <- 1999 + i
+  plt <- ggplot(df.predicted[!is.na(df.predicted$r) & df.predicted$year == pltyear,], aes(lon, lat)) +
+      #geom_raster(aes(fill = log(r))) +
+      geom_raster(aes(fill = r)) +
+      coord_equal() +
+      theme_map() +
+      theme(legend.position = "bottom", legend.key.width = unit(2, "cm")) +
+      scale_fill_viridis(limits = c(0, 1), guide = guide_colorbar(title = paste("electricity access", pltyear, sep = " ")))
+  #ggsave(filename = paste("code_output/geos1/access_", pltyear, ".png", sep = ""), plt)
+}
 
-#####################################
+ggfunk <- function(){
+  lapply(1:16, function(x) ggdraw(x))
+}
 
-library(ggplot2)
-library(ggthemes)
-library(viridis)
-
-pltyear <- 1999 + 16
-ggplot(df.predicted[!is.na(df.predicted$r) & df.predicted$year == pltyear,], aes(lon, lat)) +
-    #geom_raster(aes(fill = log(r))) +
-    geom_raster(aes(fill = r)) +
-    coord_equal() +
-    theme_map() +
-    theme(legend.position = "bottom", legend.key.width = unit(2, "cm")) +
-    scale_fill_viridis(limits = c(0, 1), guide = guide_colorbar(title = paste("access", pltyear, sep = " ")))
-    #scale_fill_viridis(guide = guide_colorbar(title = paste("access", pltyear, sep = " ")))
-graphics.off()
-
-
+saveGIF(ggfunk, interval = .3, movie.name = "electricity_access.gif")
 
 ##### Sanity check
 
@@ -223,4 +279,8 @@ points(.5,.5,pch=16, col="red")
 lines(c(0,1), c(0,1), col= "red")
 
 length(predicted.test.mean)
+
 graphics.off()
+
+
+
