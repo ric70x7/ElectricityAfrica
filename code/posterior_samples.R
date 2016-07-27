@@ -1,7 +1,7 @@
 # Core model: predictions and interpolations
 # ------------------------------------------
 #
-# Edited: July 25, 2016
+# Edited: July 26, 2016
 # This is the core file (train and test with non obfuscated data)
 #
 # Predictor
@@ -32,14 +32,7 @@ ntl2010.x <- getValues(ntl2010)
 # Population 2010
 pop2010 <- raster("code_output//Population/GPW3_2010.tif")
 pop2010.x <- getValues(pop2010)
-#pop2010.raw <- raster("data/Africa-POP-2010_africa2010ppp/africa2010ppp.tif")
-#pop2010 <- resample(pop2010.raw, ntl2010)
-#pop2010.x <- getValues(pop2010)
-#pop.years <- seq(2000, 2015, 5)
-#pop.list <- list(raster("data/Population/GPW3_2000.tif"),
-#                 raster("data/Population/GPW3_2005.tif"),
-#                 raster("data/Population/GPW3_2010.tif"),
-#                 raster("data/Population/GPW3_2015.tif"))
+
 
 # Whole grid
 afr.locs <- xyFromCell(ntl2010, seq(ntl2010))
@@ -53,7 +46,6 @@ afr.mask <- ntl.mask & pop.mask
 
 # Covariates
 z.year <- as.list((2000:2015 - center.year)/scale.year)
-#z.pop2010 <- log(1+pop2010.x[afr.mask])
 z.ntl <- list()
 z.pop <- list()
 for(i in seq(z.year)){
@@ -74,23 +66,6 @@ for(i in seq(z.year)){
   popraster <- raster(popfilename)
   z.pop[[i]] <- log(1+getValues(popraster)[afr.mask])
   
-  #if(yi < 2005){
-  #  fa <- 1
-  #  fb <- 2
-  #}else{
-  #  if(yi < 2010){
-  #    fa <- 2
-  #    fb <- 3
-  #  }else{
-  #    if(yi < 2015){
-  #      fa <- 3
-  #      fb <- 4
-  #    }
-  #  }
-  #}
-  #a <- (pop.years[fb] - yi) * .2
-  #b <- 1 - a
-  #z.pop[[i]] <- log(1 + a * getValues(pop.list[[fa]])[afr.mask] + b * getValues(pop.list[[fb]])[afr.mask])
 }
 
 
@@ -145,8 +120,6 @@ boot.predictor <- function(slices, time.point){
   return(rowMeans(inla.link.invlogit(eta)))
 }
 
-#aux <- boot.predictor(slices = slices.list[[1]], time.point = 3)
-#length(aux)
 
 # Definition of settings to parallelize
 num.cores <- 3 # FIXME: change to 10
@@ -174,6 +147,12 @@ for(i in 1:16){
   map.values[[i]] <- rowMeans(expected)
 }
 
+map.values.s1 <- map.values
+save(map.values.s1, file = "samples_set1.R")
+#map.values.s2 <- map.values
+#save(map.values.s2, file = "samples_set2.R")
+#map.values.s3 <- map.values
+#save(map.values.s3, file = "samples_set3.R")
 
 # Raster files
 template <- rep(NA, ntlraster@nrows * ntlraster@ncols)
@@ -195,19 +174,13 @@ for(i in 1:16){
   writeRaster(eaccess, filename, format = "GTiff", overwrite = TRUE)
 }
 
-#####################################
-# ggplots
-library(ggplot2)
-library(ggthemes)
-library(viridis)
-library(animation)
 
+# Store predictions in data frame format
 df.template <- data.frame(lon = afr.locs[,1],
                           lat = afr.locs[,2],
                           pixel = seq(afr.locs[,1]),
                           year = NA,
                           r = NA)
-
 df.predicted <- data.frame()
 for(i in 1:16){
   df.i <- df.template
@@ -217,7 +190,16 @@ for(i in 1:16){
   df.predicted <- rbind(df.predicted, df.i)
 }
 
-save(map.values, df.predicted, "code_output/geos1/predicted_data.RData")
+save(map.values, df.predicted, file = "code_output/geos1/predicted_data.RData")
+
+
+#####################################
+# ggplots
+library(ggplot2)
+library(ggthemes)
+library(viridis)
+library(animation)
+
 
 for(i in 1:16){
 #ggdraw <- function(i){
@@ -237,7 +219,7 @@ ggfunk <- function(){
   lapply(1:16, function(x) ggdraw(x))
 }
 
-ani.options(convert = 'C:\\Program Files\\ImageMagick-7.0.2-Q16\\convert.exe')
+#ani.options(convert = 'C:\\Program Files\\ImageMagick-7.0.2-Q16\\convert.exe')
 saveGIF(ggfunk(), interval = .3, movie.name = "code_output/geos1/electricity_access.gif")
 
 
@@ -290,6 +272,3 @@ lines(c(0,1), c(0,1), col= "red")
 length(predicted.test.mean)
 
 graphics.off()
-
-
-
