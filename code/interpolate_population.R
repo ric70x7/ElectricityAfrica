@@ -18,7 +18,6 @@ pop.list <- list(raster("data/Population/GPW3_2000.tif"),
 
 # Geometric interpolationper year
 for(i in c(1:4, 6:9, 11:14)){
-#for(i in c(1:2)){
   yi <- 2000 + i
   a <- sum(yi > pop.years)
   b <- a + 1
@@ -46,43 +45,21 @@ for(i in c(1:4, 6:9, 11:14)){
   writeRaster(pop.raster, filename, format = "GTiff", overwrite = TRUE)
 }
 
-#plot(log(raster("code_output/Population/GPW3_2000.tif")), col = terrain.colors(16), breaks = c(seq(-10,20,2)))
-#plot(log(raster("code_output/Population/GPW3_2001.tif")), col = terrain.colors(16), breaks = c(seq(-10,20,2)))
-#plot(log(raster("code_output/Population/GPW3_2002.tif")), col = terrain.colors(16), breaks = c(seq(-10,20,2)))
-#plot(log(raster("code_output/Population/GPW3_2003.tif")), col = terrain.colors(16), breaks = c(seq(-10,20,2)))
-#plot(log(raster("code_output/Population/GPW3_2004.tif")), col = terrain.colors(16), breaks = c(seq(-10,20,2)))
-#plot(log(raster("code_output/Population/GPW3_2005.tif")), col = terrain.colors(16), breaks = c(seq(-10,20,2)))
-#
-#plot(log(raster("code_output/Population/GPW3_2006.tif")), col = terrain.colors(16), breaks = c(seq(-10,20,2)))
-#plot(log(raster("code_output/Population/GPW3_2007.tif")), col = terrain.colors(16), breaks = c(seq(-10,20,2)))
-#plot(log(raster("code_output/Population/GPW3_2008.tif")), col = terrain.colors(16), breaks = c(seq(-10,20,2)))
-#plot(log(raster("code_output/Population/GPW3_2009.tif")), col = terrain.colors(16), breaks = c(seq(-10,20,2)))
-#plot(log(raster("code_output/Population/GPW3_2010.tif")), col = terrain.colors(16), breaks = c(seq(-10,20,2)))
-#
-#plot(log(raster("code_output/Population/GPW3_2011.tif")), col = terrain.colors(16), breaks = c(seq(-10,20,2)))
-#plot(log(raster("code_output/Population/GPW3_2012.tif")), col = terrain.colors(16), breaks = c(seq(-10,20,2)))
-#plot(log(raster("code_output/Population/GPW3_2013.tif")), col = terrain.colors(16), breaks = c(seq(-10,20,2)))
-#plot(log(raster("code_output/Population/GPW3_2014.tif")), col = terrain.colors(16), breaks = c(seq(-10,20,2)))
-#plot(log(raster("code_output/Population/GPW3_2015.tif")), col = terrain.colors(16), breaks = c(seq(-10,20,2)))
+#plot(log(1+raster("code_output/Population/GPW3_2000.tif")), col = terrain.colors(16), breaks = c(seq(-10,20,2)))
+#plot(log(1+raster("code_output/Population/GPW3_2001.tif")), col = terrain.colors(16), breaks = c(seq(-10,20,2)))
+#plot(log(1+raster("code_output/Population/GPW3_2002.tif")), col = terrain.colors(16), breaks = c(seq(-10,20,2)))
+#plot(log(1+raster("code_output/Population/GPW3_2003.tif")), col = terrain.colors(16), breaks = c(seq(-10,20,2)))
+#plot(log(1+raster("code_output/Population/GPW3_2004.tif")), col = terrain.colors(16), breaks = c(seq(-10,20,2)))
+#plot(log(1+raster("code_output/Population/GPW3_2005.tif")), col = terrain.colors(16), breaks = c(seq(-10,20,2)))
 
+#plot(log(1+raster("code_output/Population/GPW3_2006.tif")), col = terrain.colors(16), breaks = c(seq(-10,20,2)))
+#plot(log(1+raster("code_output/Population/GPW3_2007.tif")), col = terrain.colors(16), breaks = c(seq(-10,20,2)))
+#plot(log(1+raster("code_output/Population/GPW3_2008.tif")), col = terrain.colors(16), breaks = c(seq(-10,20,2)))
+#plot(log(1+raster("code_output/Population/GPW3_2009.tif")), col = terrain.colors(16), breaks = c(seq(-10,20,2)))
+#plot(log(1+raster("code_output/Population/GPW3_2010.tif")), col = terrain.colors(16), breaks = c(seq(-10,20,2)))
 
-##
-
-#plot((raster("code_output/Population/GPW3_2000.tif")), col = terrain.colors(16))
-#plot((raster("code_output/Population/GPW3_2001.tif")), col = terrain.colors(16))
-#plot((raster("code_output/Population/GPW3_2002.tif")), col = terrain.colors(16))
-#plot((raster("code_output/Population/GPW3_2003.tif")), col = terrain.colors(16))
-#plot((raster("code_output/Population/GPW3_2004.tif")), col = terrain.colors(16))
-#plot((raster("code_output/Population/GPW3_2005.tif")), col = terrain.colors(16))
-#
-#plot((raster("code_output/Population/GPW3_2006.tif")), col = terrain.colors(16))
-#plot((raster("code_output/Population/GPW3_2007.tif")), col = terrain.colors(16))
-#plot((raster("code_output/Population/GPW3_2008.tif")), col = terrain.colors(16))
-#plot((raster("code_output/Population/GPW3_2009.tif")), col = terrain.colors(16))
-#plot((raster("code_output/Population/GPW3_2010.tif")), col = terrain.colors(16))
-#
-#plot((raster("code_output/Population/GPW3_2011.tif")), col = terrain.colors(16))
-#plot((raster("code_output/Population/GPW3_2012.tif")), col = terrain.colors(16))
-#plot((raster("code_output/Population/GPW3_2013.tif")), col = terrain.colors(16))
-#plot((raster("code_output/Population/GPW3_2014.tif")), col = terrain.colors(16))
-#plot((raster("code_output/Population/GPW3_2015.tif")), col = terrain.colors(16))
+#plot(log(1+raster("code_output/Population/GPW3_2011.tif")), col = terrain.colors(16), breaks = c(seq(-10,20,2)))
+#plot(log(1+raster("code_output/Population/GPW3_2012.tif")), col = terrain.colors(16), breaks = c(seq(-10,20,2)))
+#plot(log(1+raster("code_output/Population/GPW3_2013.tif")), col = terrain.colors(16), breaks = c(seq(-10,20,2)))
+#plot(log(1+raster("code_output/Population/GPW3_2014.tif")), col = terrain.colors(16), breaks = c(seq(-10,20,2)))
+#plot(log(1+raster("code_output/Population/GPW3_2015.tif")), col = terrain.colors(16), breaks = c(seq(-10,20,2)))
