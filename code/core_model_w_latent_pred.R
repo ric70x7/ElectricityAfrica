@@ -87,3 +87,4 @@ m <- inla(predictor,
 m_core <- m
 meta_core <- meta
 save(mesh.s, m_core, meta_core, file = "code_output/geos1/core_latent_interpolation.RData")
+save(df, df.test, file = "code_output/geos1/core_datasets.RData")

@@ -70,7 +70,7 @@ for(i in seq(z.year)){
 
 
 # Posterior samples
-num.samples <- 300# FIXME: change to 10000
+num.samples <- 500# FIXME: change to 10000
 post.samples <- inla.posterior.sample(n = num.samples, result = m_core)
 
 
@@ -122,7 +122,7 @@ boot.predictor <- function(slices, time.point){
 
 
 # Definition of settings to parallelize
-num.cores <- 3 # FIXME: change to 10
+num.cores <- 5 # FIXME: change to 10
 batch.size <- 100 # FIXME: change to 1000
 num.slices <- num.samples/batch.size
 
@@ -134,7 +134,6 @@ for(i in 1:num.slices){
 
 # Parallel processing
 map.values <- list()
-#i <- 1 #FIXME: delete this line
 for(i in 1:16){
   cl <- makeCluster(num.cores)
   registerDoParallel(cl)
@@ -147,12 +146,39 @@ for(i in 1:16){
   map.values[[i]] <- rowMeans(expected)
 }
 
-map.values.s1 <- map.values
-save(map.values.s1, file = "samples_set1.R")
+#map.values.s1 <- map.values
+#save(map.values.s1, file = "samples_set1.RData") #2000
+
 #map.values.s2 <- map.values
-#save(map.values.s2, file = "samples_set2.R")
+#save(map.values.s2, file = "samples_set2.RData") #4000
+
 #map.values.s3 <- map.values
-#save(map.values.s3, file = "samples_set3.R")
+#save(map.values.s3, file = "samples_set3.RData") #6000
+
+#map.values.s4 <- map.values
+#save(map.values.s4, file = "samples_set4.RData") #8000
+
+#map.values.s5 <- map.values
+#save(map.values.s5, file = "samples_set5.RData") #10000
+
+
+# Combine all simulations
+load("samples_set1.RData")
+load("samples_set2.RData")
+load("samples_set3.RData")
+load("samples_set4.RData")
+load("samples_set5.RData")
+
+map.values <- list()
+for(i in 1:16){
+  map.values[[i]] <- rowMeans(cbind(map.values.s1[[i]],
+                                    map.values.s2[[i]],
+                                    map.values.s3[[i]],
+                                    map.values.s4[[i]],
+                                    map.values.s5[[i]]))
+}
+save(map.values, file = "code_output/geos1/map_values.Rdata")
+
 
 # Raster files
 template <- rep(NA, ntlraster@nrows * ntlraster@ncols)
@@ -190,7 +216,7 @@ for(i in 1:16){
   df.predicted <- rbind(df.predicted, df.i)
 }
 
-save(map.values, df.predicted, file = "code_output/geos1/predicted_data.RData")
+save(df.predicted, file = "code_output/geos1/predicted_data.RData")
 
 
 #####################################
@@ -272,3 +298,10 @@ lines(c(0,1), c(0,1), col= "red")
 length(predicted.test.mean)
 
 graphics.off()
+
+
+image(raster("code_output/geos1/electricity_access_2000.tif"))
+image(raster("code_output/geos1/electricity_access_2001.tif"))
+image(raster("code_output/geos1/electricity_access_2002.tif"))
+image(raster("code_output/geos1/electricity_access_2015.tif"))
+plot(m_core)
