@@ -1,26 +1,35 @@
 Files content and chronological order
 -------------------------------------
-Edite July 25, 2016
+Edite August 25, 2016
 
 
-1) dhs_preprocess.R
-   Clean DHS surveys and organize them in a data frame
-   
-2) additional_surveys_preprocess.R
-   Put surveys, appart form DHS, in a data frame
-   
-3) interpolate_population.R   
-   Create layers of population 2001-2004, 2006-2009, 2011-2014 by interpolating
-   the available data 2000, 2005, 2010, 2015
-   
-3) dhs_w_covariates.R
-   Add covariates to data frame with DHS data
-   
-4) other_data_w_covariates.R
-   Add covariates to data frame with additional surveys
-   
-5) inla_preliminaries.R
-   Define mesh and data indices
-   
-6) core_model_w_latent_pred.R
-   Code for running INLA
+ 1) dhs_preprocess.R
+    Clean DHS surveys and organize them in a data frame
+    
+ 2) additional_surveys_preprocess.R
+    Put surveys, appart form DHS, in a data frame
+    
+ 3) third_set_surveys.R
+    Put third set of surveys in a data frame
+    
+ 4) interpolate_population.R   
+    Create layers of population 2001-2004, 2006-2009, 2011-2014 by interpolating
+    the available data 2000, 2005, 2010, 2015
+    
+ 5) dhs_w_covariates.R
+    Add covariates to data frame with DHS data
+    
+ 6) other_data_w_covariates.R
+    Add covariates to data frame with additional surveys
+    
+ 7) set3_w_covariates.R
+    Add covariates to set3
+    
+ 8) combine_datasets.R
+    Define mesh and data indices
+    
+ 9) inla_preliminaries.R
+    Define mesh and data indices
+  
+10) core_model_w_latent_pred.R
+    Code for running INLA

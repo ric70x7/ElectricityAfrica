@@ -1,7 +1,7 @@
 # INLA preliminaries
 # ------------------
 #
-# Edited: July 20, 2016
+# Edited: September 14, 2016
 
 
 library(INLA)
@@ -9,18 +9,15 @@ library(raster)
 
 #graphics.off()
 #rm(list = ls())
-load("code_output/electricity_dhs_w_covariates.RData")
-survey.iso3 <- unique(df$iso3)
 
-xy <- df[, c("lon", "lat")]
+load("code_output/train_and_test_data.RData")
 
-#countries <- c("MWI", "ZMB")
-#df <- subset(df, iso3 %in% countries)
-#  ix <- sample(seq(nrow(df)), nrow(df))
-#df.test <- df[ix[1101:nrow(df)],]
-#  df <- df[ix[1:1100],]
-#df.test <- df[ix[601:1000],]
-#df <- df[ix[1:250],]
+#DELETE these lines
+df.train <- df.train[1:1000,]
+df.test <- df.train[1:1000,]
+
+xy <- df.train[, c("lon", "lat")]
+
 
 # Define a list to store metadata
 meta <- list()
@@ -30,8 +27,7 @@ meta$ix <- list()
 
 
 # Temporal mesh
-mesh.t <- inla.mesh.1d(loc = df$year,
-                       interval = c(min(df$year), max(df$year)))
+mesh.t <- inla.mesh.1d(loc = df.train$year, interval = c(min(df.train$year), max(df.train$year)))
 
 
 # Spatial mesh
@@ -43,12 +39,12 @@ afr.spde <- inla.spde2.matern(mesh = mesh.s, alpha = 2)
 
 
 # Indices associated to the observations
-meta$num$data <- nrow(df)
-meta$points$time <- df$year
+meta$num$data <- nrow(df.train)
+meta$points$time <- df.train$year
 meta$points$span.period <- range(mesh.t$loc)
 meta$ix$time.order <- meta$points$time - min(meta$points$span.period) + 1
-meta$num$time.knots <- max(meta$points$span.period) - min(df$year) + 1
-meta$points$spatial <- df[, c("lon", "lat")]
+meta$num$time.knots <- max(meta$points$span.period) - min(df.train$year) + 1
+meta$points$spatial <- df.train[, c("lon", "lat")]
 
 
 # Index of observations
