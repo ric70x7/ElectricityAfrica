@@ -14,7 +14,8 @@ load("code_output/train_and_test_data.RData")
 
 #DELETE these lines
 df.train <- df.train[1:1000,]
-df.test <- df.train[1:1000,]
+df.test1 <- df.test1[1:100,]
+#df.test2 <- df.test2[1:100,]
 
 xy <- df.train[, c("lon", "lat")]
 
