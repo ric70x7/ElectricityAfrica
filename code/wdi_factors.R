@@ -5,89 +5,107 @@
 # This is the core file (train and test with non obfuscated data)
 
 library(betareg)
+library(rstan)
 
 rm(list=ls())
 
 # WDI data
 wdi <- read.csv("data/World_Development_Indicators/Data2.csv")
-wdi <- wdi[complete.cases(wdi),]
+#wdi <- wdi[complete.cases(wdi),]
 wdi$Country.Name <- paste(wdi$Country.Name)
 wdi$Country.Code <- paste(wdi$Country.Code)
 
-
 # Sum of lights related fles
-sol <- read.csv("data/SOLbyCountry.csv")
-lpk <- read.csv("data/SOLperKm.csv")
+load("code_output/country_stats.RData")
 
+# DHS data
+load("code_output/electricity_dhs.RData")
 
-# Replace names
-sol$COUNTRY <- paste(sol$COUNTRY)
-lpk$COUNTRY <- paste(lpk$COUNTRY)
-current_names <- list("Congo DR", "Congo Rep", "Cote d Ivoire","Egypt", "Gambia", "Guinea Bissau")
-replace_names <- list("Congo, Dem. Rep.", "Congo, Rep.", "Cote d'Ivoire", "Egypt, Arab Rep.", "Gambia, The", "Guinea-Bissau")
-for(i in seq(current_names)){
-  sol$COUNTRY[sol$COUNTRY == current_names[[i]]] <- replace_names[[i]]
-  lpk$COUNTRY[lpk$COUNTRY == current_names[[i]]] <- replace_names[[i]]
-}
-# Add ISO3
-sol$ISO3 <- NA
-lpk$ISO3 <- NA
-lpk <- lpk[,c(1, ncol(lpk), 2:(ncol(lpk)-1))]
-for(country in sol$COUNTRY){
-  if(country == "Western Sahara"){ #USE Moroco
-    sol$ISO3[sol$COUNTRY == paste(country)] <- "ESH"
-    lpk$ISO3[lpk$COUNTRY == paste(country)] <- "ESH"
-  }else{
-    sol$ISO3[sol$COUNTRY == paste(country)] <- paste(wdi$Country.Code[wdi$Country.Name == paste(country)])
-    lpk$ISO3[lpk$COUNTRY == paste(country)] <- paste(wdi$Country.Code[wdi$Country.Name == paste(country)])
-  }  
-}
-# Relative size
-deltasol <- sol[,c("COUNTRY", "ISO3"),]
-for(i in 1:16){
-  base <- sol$YR2000
-  k <- min(i, 14)
-  deltasol[[paste("YR", 1999 + i, sep = "")]] <- sol[,3+k]/base
+# Add WDI to country_stats
+country_stats$wdi <- NA
+for(iso3i in country_stats$iso3){
+  iso3x <- ifelse(iso3i == "ESH", "MAR", iso3i) # Western Sahara is a disputed territory, there is no WDI data
+  for(yj in c(2000,2010,2012)){
+    varj <- paste("YR", yj, sep = "")
+    ix <- country_stats$iso3 == iso3i & country_stats$year == yj
+    country_stats$wdi[ix] <-  wdi[wdi$Country.Code == iso3x, varj]/100
+  }
 }
 
-lpk$YR2014 <- lpk$YR2013
-lpk$YR2015 <- lpk$YR2013
-
-# Remove WDI not in SOL
-ix <- match(deltasol$ISO3, wdi$Country.Code)
-ix <- ix[!is.na(ix)]
-wdi <- wdi[ix,]
+# Add DHS to country_stats
+country_stats$dhs_r <- NA
+for(iso3i in unique(survey.data.agg$iso3)){
+  dfi <- subset(survey.data.agg, iso3 == iso3i)
+  for(yj in unique(dfi$year)){
+    dfij <- subset(dfi, year == yj)
+    num_pos <- sum(dfij$has_electricity)
+    num_tot <- sum(dfij$total)
+    ix <- country_stats$iso3 == iso3i & country_stats$year == yj
+    country_stats$dhs_r[ix] <- num_pos/num_tot
+  }
+}
 
 
 # Beta regressions
-wdi.estimates <- list()
-for(i in seq(nrow(wdi))){
-  code.i <- wdi$Country.Code[i]
+country_stats$wdi_estimate <- NA
+for(iso3i in unique(country_stats$iso3)){
   
   # Dataframe for each country
-  wdi.data <- data.frame(year = 2000:2015, sol = NA, lpk = NA, r = NA)
-  wdi.data$sol <- as.numeric(deltasol[deltasol$ISO3 == code.i, 3:18])
-  wdi.data$lpk <- as.numeric(lpk[lpk$ISO3 == code.i, 3:18])
-  wdi.data$r[c(1,11,13)] <- as.numeric(wdi[wdi$Country.Code == code.i, c("YR2000", "YR2010", "YR2012")])/100
+  df <- subset(country_stats, iso3 == iso3i)
+  df$wdi[df$wdi == 1] <- .999
+  df$wdi[df$wdi == 0] <- .001
+  df$X <- 1000*df$ntl/df$pop
   
-  # proportion must be between 0 and 1
-  wdi.data$r[wdi.data$r == 1] <- .999
-  wdi.data$r[wdi.data$r == 0] <- .001
+#  predictor <- wdi ~ 1 +  X
+#  beta_model <- betareg(predictor, data = subset(df, !is.na(df$wdi)))
+#  beta_pred <- predict(beta_model, newdata = df)
+#  
+#  country_stats$wdi_estimate[country_stats$iso3 == iso3i] <- beta_pred
+#  
+#  #plot(df$X, df$wdi, col = "black", pch = 16)
+#  #points(df$X, beta_pred, col = "red", pch = 16)
+#  
+#  plot(df$year, df$wdi, col = "black", pch = 16, ylim = c(0,1), main = iso3i)
+#  lines(df$year, beta_pred, col = "red")
+#  points(df$year, df$dhs_r, pch = 16, col = "gray")
   
-  predictor <- r ~ 1 + lpk
-  beta_model <- betareg(predictor, data = subset(wdi.data, !is.na(r)))#,  control = betareg.control(phi=FALSE, hessian = TRUE, start = c(mean(wdi.data$r, na.rm = TRUE),1, 100)))
   
-  beta_pred <- predict(beta_model, newdata = wdi.data)
-  wdi.estimates[[code.i]] <- data.frame(year = wdi.data$year, sol = wdi.data$sol, r = beta_pred)
+  gp_df <- data.frame(year = 2000:2015,
+                      r = NA,
+                      x = 1000*df$ntl/df$pop)
+  for(yj in gp_df$year){
+    gp_r <- df$wdi[df$year == yj]
+    if(!is.na(gp_r)){
+      gp_df$r[gp_df$year==yj] <- gp_r
+    }else{
+      gp_r <- df$dhs_r[df$year == yj]
+      if(!is.na(gp_r)){
+        gp_df$r[gp_df$year==yj] <- gp_r
+      }
+    }
+  }
   
-  ##plot(wdi.data$sol, wdi.data$r, pch = 16, col = "blue")
-  ##lines(wdi.data$sol, beta_pred, col = "red")
-  #plot(wdi.data$lpk, wdi.data$r, pch = 16, col = "red", ylim = c(0,2))
-  #points(wdi.data$lpk, beta_pred, col = "gray")
-  #plot(wdi.data$year, beta_pred)
-  #points(wdi.data$year, wdi.data$r, pch = 16, col = "red")
+  input_dim <- 1 
+  data_mask <- !is.na(gp_df$r)
+  hyper.stan <- stan(file="code/logistic_hyper.stan",
+                     data=list(X_data = matrix(gp_df$x[data_mask] ,ncol = input_dim),
+                               Y_data = gp_df$r[data_mask],
+                               input_dim = input_dim,
+                               num_data = sum(data_mask),
+                               M_prior_data = log(gp_df$r[data_mask]/(1-gp_df$r[data_mask]))  ),
+                     warmup = 300, iter = 1000, chains = 1)
+  
+  
+  
+  gp_samples <- extract(hyper.stan, permuted = TRUE)
+  
+  beta_mean <- apply(1/(1+exp(-gp_samples$GP_data)), 2, FUN = mean, na.rm = TRUE)
   
 }
+
+
+
+
 graphics.off()
 
 save(wdi.estimates, file = "code_output/wdi_factors.RData")

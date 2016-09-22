@@ -1,7 +1,7 @@
 # Interpolation of population raster files
 # ----------------------------------------
 #
-# Edited September 20, 2016
+# Edited September 21, 2016
 # Assume geometric increments in the population
 
 rm(list = ls())
@@ -11,7 +11,7 @@ library(raster)
 # Raster files
 pop.years <- seq(2000, 2015, 5)
 
-template <- raster("data/Population/density/GPW3_2000.tif")
+#template <- raster("data/Population/density/GPW3_2000.tif")
 pop.files <- c("data/Population/GPW4_2000.tif",
                "data/Population/GPW4_2005.tif",
                "data/Population/GPW4_2010.tif",
@@ -19,9 +19,13 @@ pop.files <- c("data/Population/GPW4_2000.tif",
                
 pop.list <- list()
 for(i in seq(pop.years)){
+  yi <- pop.years[i]
+  template <- raster(paste("data/ntl/Inland_water_masked_5k/ts", min(yi, 2013) , "W_template.tif", sep = ""))
   pop <- raster(pop.files[i])
   pop2 <- aggregate(pop, fac = 5, fun = sum)
   pop3 <- resample(pop2, template, method = "ngb")
+  pop3[template[] == 128] <- NA # values of 128 in template are water masked areas
+  pop3[is.na(pop3[]) & template[] != 128] <- 0
   pop.list <- c(pop.list, pop3)
   
   filename <- paste("code_output/Population/GPW4_", pop.years[i], sep = "")

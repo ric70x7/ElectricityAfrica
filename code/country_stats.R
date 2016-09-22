@@ -1,27 +1,46 @@
+# Compute ntl and pop statistics per country
+# ------------------------------------------
+#
+# Edited: September 21, 2016
+
+
 library(raster)
 
 afri_main <- shapefile("data/Africa_main_country/Africa_main_country.shp")
-plot(afri_main)
 
 country_stats <- data.frame(year = sort(rep(2000:2015, length(afri_main$ISO3))),
                             iso3 = rep(afri_main$ISO3, 16),
-                            sum_lights = NA, sum_pop = NA)
+                            ntl = NA, pop = NA, ntl_pkh = NA, num_ntlpix = NA)
 
-for(i in 1:16){
-  yi <- 1999 + i
-  ntl <- raster(paste("data/ntl/ts", yi, "T-1.tif", sep = ""))
-  pop <- raster(paste("code_output/Population/GPW4_", yi, ".tif", sep = ""))
-  for(iso3j in afri_main$ISO3){
-    poly <- afri_main[afri_main$ISO3 == iso3j,]
+
+for(iso3j in afri_main$ISO3){
+  # Base layers
+  ntl_x <- raster(paste("data/ntl/Inland_water_masked_5k/ts2010W_template.tif", sep = ""))
+  ntl_x[ntl_x[]==128] <- NA # Value 128 is NA
+  # Masks
+  shp_boundary <- afri_main[afri_main$ISO3 == iso3j,]
+  raster_mask <- mask(ntl_x, shp_boundary)
+  cells_mask <- !is.na(raster_mask[])
+  for(i in 1:16){
+  
+    yi <- 1999 + i
     ix <- country_stats$year == yi & country_stats$iso3 == iso3j
-    poly_ntl <- mask(ntl, poly)
-    poly_pop <- mask(pop, poly)
-    country_stats$sum_lights[ix] <- sum(poly_ntl[], na.rm = TRUE)
-    country_stats$sum_lights[ix] <- sum(poly_pop[], na.rm = TRUE)
+  
+    ntl <- raster(paste("data/ntl/Inland_water_masked_5k/ts", min(yi, 2013) , "W_template.tif", sep = ""))
+    ntl[ntl[]==128] <- NA # Value 128 is NA
+    pop <- raster(paste("code_output/Population/GPW4_", yi, ".tif", sep = ""))
+  
+  
+    country_stats$ntl[ix] <- sum(ntl[cells_mask], na.rm = TRUE)
+    country_stats$pop[ix] <- sum(pop[cells_mask], na.rm = TRUE)
+    ntl_per_hab <- ntl[cells_mask]/pop[cells_mask]
+    ntl_per_hab[!is.finite(ntl_per_hab)] <- NA
+    country_stats$ntl_pkh[ix] <- 1000*mean(ntl_per_hab, na.rm = TRUE)
+    country_stats$num_ntlpix[ix] <- sum(ntl[cells_mask]>0)
+    
+    print(c(yi, iso3j)) 
   }
 }
+    
 
-
-country_stats$ws_ntl <- country_stats$sum_lights/country_stats$sum_pop
-
-save(country_stats, file = "code_output/code_output/country_stats.RData")
+save(country_stats, file = "code_output/country_stats.RData")
