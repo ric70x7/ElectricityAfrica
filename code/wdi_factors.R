@@ -7,104 +7,62 @@
 library(betareg)
 library(rstan)
 
-rm(list=ls())
-
-# WDI data
-wdi <- read.csv("data/World_Development_Indicators/Data2.csv")
-#wdi <- wdi[complete.cases(wdi),]
-wdi$Country.Name <- paste(wdi$Country.Name)
-wdi$Country.Code <- paste(wdi$Country.Code)
-
-# Sum of lights related fles
+rm(list = ls())
 load("code_output/country_stats.RData")
 
-# DHS data
-load("code_output/electricity_dhs.RData")
-
-# Add WDI to country_stats
-country_stats$wdi <- NA
-for(iso3i in country_stats$iso3){
-  iso3x <- ifelse(iso3i == "ESH", "MAR", iso3i) # Western Sahara is a disputed territory, there is no WDI data
-  for(yj in c(2000,2010,2012)){
-    varj <- paste("YR", yj, sep = "")
-    ix <- country_stats$iso3 == iso3i & country_stats$year == yj
-    country_stats$wdi[ix] <-  wdi[wdi$Country.Code == iso3x, varj]/100
-  }
-}
-
-# Add DHS to country_stats
-country_stats$dhs_r <- NA
-for(iso3i in unique(survey.data.agg$iso3)){
-  dfi <- subset(survey.data.agg, iso3 == iso3i)
-  for(yj in unique(dfi$year)){
-    dfij <- subset(dfi, year == yj)
-    num_pos <- sum(dfij$has_electricity)
-    num_tot <- sum(dfij$total)
-    ix <- country_stats$iso3 == iso3i & country_stats$year == yj
-    country_stats$dhs_r[ix] <- num_pos/num_tot
-  }
-}
-
-
 # Beta regressions
-country_stats$wdi_estimate <- NA
 for(iso3i in unique(country_stats$iso3)){
   
   # Dataframe for each country
   df <- subset(country_stats, iso3 == iso3i)
-  df$wdi[df$wdi == 1] <- .999
-  df$wdi[df$wdi == 0] <- .001
-  df$X <- 1000*df$ntl/df$pop
+  df$r <- subset(raw_country_stats, iso3 == iso3i)$r
+  df$r[df$r == 1] <- .999
+  df$r[df$r == 0] <- .001
   
-#  predictor <- wdi ~ 1 +  X
-#  beta_model <- betareg(predictor, data = subset(df, !is.na(df$wdi)))
-#  beta_pred <- predict(beta_model, newdata = df)
-#  
-#  country_stats$wdi_estimate[country_stats$iso3 == iso3i] <- beta_pred
-#  
-#  #plot(df$X, df$wdi, col = "black", pch = 16)
-#  #points(df$X, beta_pred, col = "red", pch = 16)
-#  
-#  plot(df$year, df$wdi, col = "black", pch = 16, ylim = c(0,1), main = iso3i)
-#  lines(df$year, beta_pred, col = "red")
-#  points(df$year, df$dhs_r, pch = 16, col = "gray")
+  # Beta regression: this is our mean prior
+  predictor <- r ~ 1 +  ntl_pkh
+  beta_model <- betareg(predictor, data = subset(df, !is.na(df$r)))
+  beta_pred <- predict(beta_model, newdata = df)
   
-  
-  gp_df <- data.frame(year = 2000:2015,
-                      r = NA,
-                      x = 1000*df$ntl/df$pop)
-  for(yj in gp_df$year){
-    gp_r <- df$wdi[df$year == yj]
-    if(!is.na(gp_r)){
-      gp_df$r[gp_df$year==yj] <- gp_r
-    }else{
-      gp_r <- df$dhs_r[df$year == yj]
-      if(!is.na(gp_r)){
-        gp_df$r[gp_df$year==yj] <- gp_r
-      }
-    }
-  }
-  
-  input_dim <- 1 
-  data_mask <- !is.na(gp_df$r)
-  hyper.stan <- stan(file="code/logistic_hyper.stan",
-                     data=list(X_data = matrix(gp_df$x[data_mask] ,ncol = input_dim),
-                               Y_data = gp_df$r[data_mask],
+  # Stan model
+  input_dim <- 2 
+  mask_data <- !is.na(df$r)
+  mask_pred <- is.na(df$r)
+  #X_data <- matrix(cbind((df$year[mask_data]-2000)/10, df$ntl_pkh[mask_data], (df$num_litpix[mask_data]-mean(df$num_litpix))/sd(df$num_litpix)), ncol = input_dim)
+  #X_pred <- matrix(cbind((df$year[mask_pred]-2000)/10, df$ntl_pkh[mask_pred], (df$num_litpix[mask_pred]-mean(df$num_litpix))/sd(df$num_litpix)), ncol = input_dim)
+  X_data <- matrix(cbind((df$year[mask_data]-2000)/10, df$ntl_pkh[mask_data]), ncol = input_dim)
+  X_pred <- matrix(cbind((df$year[mask_pred]-2000)/10, df$ntl_pkh[mask_pred]), ncol = input_dim)
+  hyper.stan <- stan(file="code/binomial_model.stan",
+                     data=list(X_data = X_data,
+                               X_pred = X_pred,
+                               Y_data = floor(df$num_households[mask_data] * df$r[mask_data]),
+                               T_data = df$num_households[mask_data],
+                               T_pred = df$num_households[mask_pred],
                                input_dim = input_dim,
-                               num_data = sum(data_mask),
-                               M_prior_data = log(gp_df$r[data_mask]/(1-gp_df$r[data_mask]))  ),
-                     warmup = 300, iter = 1000, chains = 1)
-  
+                               num_data = sum(mask_data),
+                               num_pred = nrow(df) - sum(mask_data),
+                               M_prior_data = beta_pred[mask_data],
+                               M_prior_pred = beta_pred[mask_pred]),
+                     warmup = 1000, iter = 2000, chains = 1)
   
   
   gp_samples <- extract(hyper.stan, permuted = TRUE)
   
-  beta_mean <- apply(1/(1+exp(-gp_samples$GP_data)), 2, FUN = mean, na.rm = TRUE)
+  beta_mean_data <- apply(1/(1+exp(-gp_samples$GP_data)), 2, FUN = mean, na.rm = TRUE)
+  beta_mean_pred <- apply(1/(1+exp(-gp_samples$GP_pred)), 2, FUN = mean, na.rm = TRUE)
+  
+  plot(df$year[mask_data], df$r[mask_data], ylim = c(0,1), pch = 16, col = "grey")
+  plot(df$year[mask_data], beta_mean_data, ylim = c(0,1), pch = 16, col = "black")
+  points(df$year[mask_pred], beta_mean_pred, pch = 16, col = "red")
+  
+  plot(df$ntl_pkh[mask_data], df$r[mask_data], ylim = c(0,1), pch = 16, col = "grey")
+  plot(df$ntl_pkh[mask_data], beta_mean_data, ylim = c(0,1), pch = 16, col = "black")
+  points(df$ntl_pkh[mask_pred], beta_mean_pred, pch = 16, col = "red")
   
 }
 
-
-
+iso3i <- "ZMB"
+iso3i <- "ZWE"
 
 graphics.off()
 

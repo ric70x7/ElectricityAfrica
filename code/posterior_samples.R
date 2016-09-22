@@ -253,16 +253,14 @@ saveGIF(ggfunk(), interval = .3, movie.name = "code_output/geos1/electricity_acc
 
 load("code_output/other_data_w_covariates.RData")
 
-predicted.test.mean <- c()
-for(i in seq(nrow(df.test))){
-  predicted.test.mean[i] <- inla.emarginal(inla.link.invlogit,
-                                            m_core$marginals.linear.predictor[meta_core$ix$stack$test][[i]] )
+predicted.test1.mean <- c()
+for(i in seq(nrow(df.test1))){
+  predicted.test1.mean[i] <- inla.emarginal(inla.link.invlogit,
+                                            m_core$marginals.linear.predictor[meta_core$ix$stack$test1][[i]] )
 }
-df.test$r <- df.test$electricity
-plot(df.test$r, predicted.test.mean)
+plot(df.test1$r, predicted.test1.mean)
 
 
-head(df.test)
 
 y.validation <- 2010
 A.validation <- inla.spde.make.A(mesh = mesh.s,

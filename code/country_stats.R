@@ -1,18 +1,108 @@
 # Compute ntl and pop statistics per country
 # ------------------------------------------
 #
-# Edited: September 21, 2016
+# Edited: September 22, 2016
 
 
 library(raster)
+rm(list = ls())
 
+
+# DHS (and other surveys) country data
+household_members <- read.csv("data/DHS_household_members_by_country.csv")
+electricity_access <- read.csv("data/DHS_electricity_access_by_country.csv")
+household_members$iso3 <- paste(household_members$iso3)
+electricity_access$iso3 <- paste(electricity_access$iso3)
+household_members <- subset(household_members, year >= 2000)
+electricity_access <- subset(electricity_access, year >= 2000)
+
+# World Development Index data
+wdi <- read.csv("data/World_Development_Indicators/Data2.csv")
+wdi$Country.Code <- paste(wdi$Country.Code)
+
+# Shape file of Africa
 afri_main <- shapefile("data/Africa_main_country/Africa_main_country.shp")
 
+
+# Data frame with country stats
+raw_country_stats <- data.frame(year = sort(rep(2000:2015, length(afri_main$ISO3))),
+                            iso3 = rep(afri_main$ISO3, 16),
+                            r = NA,
+                            household_members = NA)
+
+
+# Fill-in data on household members
+for(i in 1:nrow(household_members)){
+  yi <- household_members$year[i]
+  iso3i <- household_members$iso3[i]
+  ix <- raw_country_stats$year == yi & raw_country_stats$iso3 == iso3i
+  raw_country_stats$household_members[ix] <- household_members$members[i]
+}
+
+
+# Fill-in data on electricity access
+for(i in 1:nrow(electricity_access)){
+  yi <- electricity_access$year[i]
+  iso3i <- electricity_access$iso3[i]
+  ix <- raw_country_stats$year == yi & raw_country_stats$iso3 == iso3i
+  raw_country_stats$r[ix] <- electricity_access$r[i]/100
+}
+
+
+# Fill-in data on electricity access from WDI
+for(iso3i in wdi$Country.Code){
+  ix <- raw_country_stats$year == 2000 & raw_country_stats$iso3 == iso3i
+  if(sum(ix) > 0){
+    raw_country_stats$r[ix] <- ifelse(is.na(raw_country_stats$r[ix]),
+                                      wdi$YR2000[wdi$Country.Code == iso3i]/100,
+                                      raw_country_stats$r[ix])
+  }
+}
+
+
+# Data frame of filled-in data
 country_stats <- data.frame(year = sort(rep(2000:2015, length(afri_main$ISO3))),
                             iso3 = rep(afri_main$ISO3, 16),
-                            ntl = NA, pop = NA, ntl_pkh = NA, num_ntlpix = NA)
+                            r = NA,
+                            household_members = NA,
+                            pop = NA,
+                            num_households = NA,
+                            ntl = NA,
+                            num_litpix = NA)
 
 
+# Fill-in gaps in household size 
+for(iso3i in unique(country_stats$iso3)){
+  df <- subset(raw_country_stats, iso3 == iso3i & !is.na(household_members))[,c("year", "household_members")]
+  
+  if(nrow(df) == 1){
+    # Replicate value
+    ix <- country_stats$iso3 == iso3i
+    country_stats$household_members[ix] <- df$household_members
+  }else{
+    # Fill-in years in between
+    for(i in 1:(nrow(df)-1)){
+      ix <- country_stats$iso3 == iso3i & country_stats$year >= df$year[i] & country_stats$year < df$year[i+1]
+      country_stats$household_members[ix] <- df$household_members[i]
+    }
+    # Fill-in up to 2000
+    ix <- country_stats$iso3 == iso3i & country_stats$year >= 2000 & country_stats$year < df$year[1]
+    country_stats$household_members[ix] <- df$household_members[1]
+    # Fill-in up to 2015
+    ix <- country_stats$iso3 == iso3i & country_stats$year >= df$year[nrow(df)] & country_stats$year <= 2015
+    country_stats$household_members[ix] <- df$household_members[nrow(df)]
+  }
+}
+# For countries with no data use the annual average of the continent
+for(yi in unique(country_stats$year)){
+  ix <- country_stats$year == yi
+  country_stats$household_members[ix & is.na(country_stats$household_members)] <-
+    mean(country_stats$household_members[ix], na.rm = TRUE)
+  
+}
+
+
+# Aggreagate data from raster files
 for(iso3j in afri_main$ISO3){
   # Base layers
   ntl_x <- raster(paste("data/ntl/Inland_water_masked_5k/ts2010W_template.tif", sep = ""))
@@ -33,14 +123,17 @@ for(iso3j in afri_main$ISO3){
   
     country_stats$ntl[ix] <- sum(ntl[cells_mask], na.rm = TRUE)
     country_stats$pop[ix] <- sum(pop[cells_mask], na.rm = TRUE)
-    ntl_per_hab <- ntl[cells_mask]/pop[cells_mask]
-    ntl_per_hab[!is.finite(ntl_per_hab)] <- NA
-    country_stats$ntl_pkh[ix] <- 1000*mean(ntl_per_hab, na.rm = TRUE)
-    country_stats$num_ntlpix[ix] <- sum(ntl[cells_mask]>0)
     
+    hfactor <- country_stats$household_members[country_stats$year == yi & country_stats$iso3 == iso3j]
+    country_stats$num_households[ix] <-  sum(sapply(pop[cells_mask],
+                                                FUN = function(x) ifelse(x == 0, 0, max(1, floor(x/hfactor)))))
+    country_stats$num_litpix[ix] <- sum(ntl[cells_mask]>0)
     print(c(yi, iso3j)) 
   }
 }
-    
 
-save(country_stats, file = "code_output/country_stats.RData")
+
+country_stats$ntl_pkh <- 1000 * country_stats$ntl/country_stats$num_households
+
+
+save(raw_country_stats, country_stats, file = "code_output/country_stats.RData")
