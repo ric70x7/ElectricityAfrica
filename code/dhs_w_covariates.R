@@ -1,7 +1,7 @@
 # Add covariates to surveys dataframe
 # -----------------------------------
 #
-# Edited: August 26, 2016
+# Edited: September 28, 2016
 # Covariates are also standardized/transformend
 
 rm(list = ls())
@@ -9,6 +9,7 @@ library(raster)
 
 
 load("code_output/electricity_dhs.RData")
+load("code_output/country_annual_estimates.RData")
 
 
 # Aggregate survey data by pixel
@@ -55,32 +56,58 @@ df1$ntl[mask] <- getValues(afr)[pixels]
 df1$pop <- NA
 for(yi in years){
   mask <- df1$year == yi
-  filename <- paste("code_output/Population/GPW3_", yi, ".tif", sep = "") #5Km resolution
+  filename <- paste("code_output/Population/GPW4_", yi, ".tif", sep = "") #5Km resolution
   afr <- raster(filename)
   pixels <- cellFromXY(afr, df1[mask, c("lon", "lat")])
   df1$pop[mask] <- afr[pixels]
 }
 
 
-# Remove NA values
-df1 <- subset(df1, !is.na(df1$ntl) & df1$ntl <= 120 & !is.na(df1$pop) & !is.na(r))
+# Add households data to the dataframe
+df1$house <- NA
+for(yi in years){
+  mask <- df1$year == yi
+  filename <- paste("code_output/Households/HHW4_", yi, ".tif", sep = "")
+  afr <- raster(filename)
+  pixels <- cellFromXY(afr, df1[mask, c("lon", "lat")])
+  df1$house[mask] <- afr[pixels]
+}
 
 
-## Here come a bunch of heroic assumptions
-# No people => no households => no electricity
-mask <- df1$r > 0 & df1$ntl == 0 & df1$pop == 0
-df1$r[mask] <- 0
-df1$pop[is.na(df1$pop)] <- 0
+# Add country stats
+df1$country_r_mean <- NA
+df1$country_r_low <- NA
+df1$country_r_upp <- NA
+df1$country_f_mean <- NA
+df1$country_f_sd <- NA
+df1 <- subset(df1, iso3 != "COM") #FIXME
+for(iso3j in unique(df1$iso3)){
+  years_j <- unique(subset(df1, iso3 == iso3j)$year)
+  for(yj in years_j){
+    csix <- country_stats$year == yj & country_stats$iso3 == iso3j
+    dfix <- df1$year == yj & df1$iso3 == iso3j
+    df1$country_r_mean[dfix] <- country_stats$r_mean[csix]
+    df1$country_r_low[dfix] <- country_stats$r_low[csix]
+    df1$country_r_upp[dfix] <- country_stats$r_upp[csix]
+    df1$country_f_mean[dfix] <- country_stats$f_mean[csix]
+    df1$country_f_sd[dfix] <- country_stats$f_sd[csix]
+  }
+}
+
+
+# Remove observations with no population
+df1 <- subset(df1, !(is.na(df1$pop) | df1$pop == 0))
 
 
 # Standardize data
-center.year <- mean(df1$year)
-scale.year <- sd(df1$year)
-df1$z.year <- scale(df1$year, center = center.year, scale = scale.year)
-
-df1$z.pop <- log(1+df1$pop)
-df1$z.ntl <- log(1+df1$ntl)
+#center.year <- mean(df1$year)
+#scale.year <- sd(df1$year)
+#df1$z.year <- scale(df1$year, center = center.year, scale = scale.year)
+#
+#df1$z.pop <- log(1+df1$pop)
+#df1$z.ntl <- log(1+df1$ntl)
+#df1$z.house <- log(1+df1$house)
 
 
 save(df1, file = "code_output/electricity_dhs_w_covariates.RData")
-save(center.year, scale.year, file = "code_output/z_params.RData")
+#save(center.year, scale.year, file = "code_output/z_params.RData")

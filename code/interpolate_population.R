@@ -34,7 +34,7 @@ for(i in seq(pop.years)){
 }
 
 
-# Geometric interpolationper year
+# Geometric interpolation per year
 for(i in c(1:4, 6:9, 11:14)){
   yi <- 2000 + i
   a <- sum(yi > pop.years)

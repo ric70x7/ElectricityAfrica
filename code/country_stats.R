@@ -1,7 +1,7 @@
-# Compute ntl and pop statistics per country
-# ------------------------------------------
+# Compute electricity access and households size per country
+# ----------------------------------------------------------
 #
-# Edited: September 22, 2016
+# Edited: September 26, 2016
 
 
 library(raster)
@@ -63,12 +63,14 @@ for(iso3i in wdi$Country.Code){
 # Data frame of filled-in data
 country_stats <- data.frame(year = sort(rep(2000:2015, length(afri_main$ISO3))),
                             iso3 = rep(afri_main$ISO3, 16),
-                            r = NA,
                             household_members = NA,
-                            pop = NA,
                             num_households = NA,
+                            pop = NA,
                             ntl = NA,
-                            num_litpix = NA)
+                            num_lithouseholds = NA,
+                            num_poppix = NA,
+                            num_litpix = NA,
+                            num_litpoppix = NA)
 
 
 # Fill-in gaps in household size 
@@ -126,8 +128,15 @@ for(iso3j in afri_main$ISO3){
     
     hfactor <- country_stats$household_members[country_stats$year == yi & country_stats$iso3 == iso3j]
     country_stats$num_households[ix] <-  sum(sapply(pop[cells_mask],
-                                                FUN = function(x) ifelse(x == 0, 0, max(1, floor(x/hfactor)))))
-    country_stats$num_litpix[ix] <- sum(ntl[cells_mask]>0)
+                                                FUN = function(x) ifelse(x == 0, 0, max(1, floor(x/hfactor)))), na.rm = TRUE)
+    
+    country_stats$num_lithouseholds[ix] <-  sum(sapply((pop[cells_mask])[ntl[cells_mask]>0],
+                                                FUN = function(x) ifelse(x == 0, 0, max(1, floor(x/hfactor)))), na.rmna.rm = TRUE)
+    
+    country_stats$num_poppix[ix] <- sum(pop[cells_mask]>0, na.rm = TRUE)
+    country_stats$num_litpix[ix] <- sum(ntl[cells_mask]>0, na.na.rm = TRUE)
+    country_stats$num_litpoppix[ix] <- sum(ntl[cells_mask]>0 & ntl[cells_mask]>0, na.rm = TRUE)
+    
     print(c(yi, iso3j)) 
   }
 }

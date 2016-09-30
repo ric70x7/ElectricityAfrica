@@ -1,11 +1,7 @@
-// Log-Gaussian Cox Process hyperparameters sampling
-// Based on:
-// Stan Modeling Language. User's Gude and Reference Manual (Stan Version 2.11.0.)
+// Binomial regression with GP
+// ---------------------------
 //
-// NOTES: - This code does not compute predictions of the GP;
-//        - Covariance: RBF;
-//        - Link function: log(1+exp(gp));
-//        - No noise parameter;
+// Edited: September 26, 2016
 
 
 data {
@@ -41,14 +37,10 @@ transformed data {
 
 parameters {
   
-  real<lower=0> rbf_var_t;
-  real<lower=0> rbf_var_ntl;
-  real<lower=0> rbf_lengthscale_sq_t;
-  real<lower=0> rbf_lengthscale_sq_ntl;
-  //real<lower=0> rbf_lengthscale_sq_lit;
+  real<lower=0> rbf_var[input_dim];
+  real<lower=0> rbf_lengthscale_sq[input_dim];
   vector[num_data] GP_data;
   vector[num_pred] GP_pred;
-  vector[num_pred] Y_pred;
   
 }
 
@@ -58,14 +50,15 @@ transformed parameters {
   
   
   // Diagonal elements
-  for (i in 1:num_star) K_star[i,i] = rbf_var_ntl + rbf_var_t + 1e-6;
+  for (i in 1:num_star) K_star[i,i] = sum(rbf_var) + 1e-8;
   
   // Off-diagonal elements
   for (i in 1:(num_star-1)) {
     for (j in (i+1):num_star) {
-      K_star[i,j] = rbf_var_t*exp(-pow(X_star[i,1] - X_star[j,1], 2)/rbf_lengthscale_sq_t) +
-                    rbf_var_ntl*exp(-pow(X_star[i,2] - X_star[j,2], 2)/rbf_lengthscale_sq_ntl); //- pow(X_star[i,3] - X_star[j,3], 2)/rbf_lengthscale_sq_lit);
-                    
+      K_star[i,j] = 0;
+      for (d in 1:input_dim ) {
+        K_star[i,j] = K_star[i,j] + rbf_var[d] * exp(-pow(X_star[i,d] - X_star[j,d], 2)/rbf_lengthscale_sq[d]);
+      }
       K_star[j,i] = K_star[i,j];
     }  
   }
@@ -83,14 +76,11 @@ model {
   for (i in 1:num_data) GP_star[i] = GP_data[i];
   for (i in 1:num_pred) GP_star[num_data + i] = GP_pred[i];
   
-  rbf_var_t ~ gamma(8, 1);
-  rbf_var_ntl ~ gamma(8, 1);
-  rbf_lengthscale_sq_t ~ gamma(3, 1);
-  //rbf_lengthscale_sq_lit ~ gamma(3, 1);
+  for (i in 1:input_dim) rbf_var[i] ~ gamma(1, 1);
+  for (i in 1:input_dim) rbf_lengthscale_sq[i] ~ gamma(1, 1);
   
   GP_star ~ multi_normal(M_star, K_star);
   
   for (i in 1:num_data) Y_data[i] ~ binomial_logit(T_data[i], GP_data[i]);
   
 }
-

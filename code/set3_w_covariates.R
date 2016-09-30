@@ -1,7 +1,7 @@
 # Add covariates to set3
 # ----------------------------
 #
-# Edited: August 26, 2016
+# Edited: September 28, 2016
 # Covariates are also standardized/transformend
 
 
@@ -10,7 +10,8 @@ library(raster)
 
 
 load("code_output/electricity_dhs_third.RData")
-df3 <- set3[, c("ID", "lon", "lat", "year", "has_electricity", "total", "r")]
+df3 <- set3[, c("country", "iso3", "lon", "lat", "year", "has_electricity", "total", "r")]
+load("code_output/country_annual_estimates.RData")
 
 
 # Add pixel locations
@@ -37,21 +38,55 @@ df3$ntl <- afr[pixels]
 df3$pop <- NA
 for(yi in years){
   mask <- df3$year == yi
-  filename <- paste("code_output/Population/GPW3_", yi, ".tif", sep = "") #5Km resolution
+  filename <- paste("code_output/Population/GPW4_", yi, ".tif", sep = "") #5Km resolution
   afr <- raster(filename)
   pixels <- cellFromXY(afr, df3[mask, c("lon", "lat")])
   df3$pop[mask] <- afr[pixels]
 }
 
 
-# Standardize/transform values
-load("code_output/z_params.RData")
-df3$z.year <- scale(df3$year, center = center.year, scale = scale.year)
-df3$z.pop <- log(1+df3$pop)
-df3$z.ntl <- log(1+df3$ntl)
+# Add households data to the dataframe
+df3$house <- NA
+for(yi in years){
+  mask <- df3$year == yi
+  filename <- paste("code_output/Households/HHW4_", yi, ".tif", sep = "")
+  afr <- raster(filename)
+  pixels <- cellFromXY(afr, df3[mask, c("lon", "lat")])
+  df3$house[mask] <- afr[pixels]
+}
 
-# Remove points with NTL > 100
-df3 <- subset(df3, ntl < 100)
+
+# Add country stats
+df3$country_r_mean <- NA
+df3$country_r_low <- NA
+df3$country_r_upp <- NA
+df3$country_f_mean <- NA
+df3$country_f_sd <- NA
+df3 <- subset(df3, iso3 != "COM") #FIXME
+for(iso3j in unique(df3$iso3)){
+  years_j <- unique(subset(df3, iso3 == iso3j)$year)
+  for(yj in years_j){
+    csix <- country_stats$year == yj & country_stats$iso3 == iso3j
+    dfix <- df3$year == yj & df3$iso3 == iso3j
+    df3$country_r_mean[dfix] <- country_stats$r_mean[csix]
+    df3$country_r_low[dfix] <- country_stats$r_low[csix]
+    df3$country_r_upp[dfix] <- country_stats$r_upp[csix]
+    df3$country_f_mean[dfix] <- country_stats$f_mean[csix]
+    df3$country_f_sd[dfix] <- country_stats$f_sd[csix]
+  }
+}
+
+
+# Remove observations with no population
+df3 <- subset(df3, !(is.na(df3$pop) | df3$pop == 0))
+
+
+## Standardize/transform values
+#load("code_output/z_params.RData")
+#df3$z.year <- scale(df3$year, center = center.year, scale = scale.year)
+#df3$z.pop <- log(1+df3$pop)
+#df3$z.ntl <- log(1+df3$ntl)
+#df3$z.house <- log(1+df3$house)
 
 
 save(df3, file = "code_output/set3_w_covariates.RData")
