@@ -1,7 +1,7 @@
 # Beta regression models to fit WDI estimates of electricity access
 # -----------------------------------------------------------------
 #
-# Edited: September 30, 2016
+# Edited: October 3, 2016
 # This is the core file (train and test with non obfuscated data)
 
 library(betareg)
@@ -18,9 +18,12 @@ logit <- function(x){
 }
 
 load("code_output/country_stats.RData")
-iso3i <- "ZMB"
+solkm <- read.csv("data/sol_km_w_iso3.csv")
+iso3i <- "UGA"
+#iso3i <- "KEN"
 k_params <- data.frame(iso3 = paste(sort(unique(country_stats$iso3))))
 z_country_stats <- country_stats[,c("iso3", "year", "num_households", "num_litpix",  "num_lithouseholds", "ntl_pkh")]
+z_country_stats$sol_km2 <- NA
 z_country_stats$r <- NA
 
 for(iso3i in unique(country_stats$iso3)){
@@ -45,6 +48,7 @@ for(iso3i in unique(country_stats$iso3)){
   z_country_stats$num_litpix[zix] <- scale(sdf1$num_litpix) * sd1 + mean1
   z_country_stats$num_lithouseholds[zix] <- scale(sdf1$num_lithouseholds) * sd1 + mean1
   z_country_stats$ntl_pkh[zix] <- scale(sdf1$ntl_pkh) * sd1 + mean1
+  z_country_stats$sol_km2[zix] <- scale(as.numeric(solkm[solkm$iso3 == iso3i,2:17])) * sd1 + mean1
   
 }
 z_country_stats$y <- z_country_stats$r * z_country_stats$num_households
@@ -58,7 +62,7 @@ plot(df$year, df$num_lithouseholds, type = "l")
 lines(df$year, df$num_litpix, col = "blue")
 points(df$year, logit(df$r), col = "red")
 
-points(z_country_stats$num_litpix[z_country_stats$num_obsv > 2], z_country_stats$logit_r[z_country_stats$num_obsv > 2], col = "red")
+plot(z_country_stats$num_litpix[z_country_stats$num_obsv > 2], z_country_stats$logit_r[z_country_stats$num_obsv > 2], col = "red")
 
 # Functions to process samples
 mean_inv_logit <- function(x){
@@ -91,7 +95,6 @@ sd_f <- function(x){
 #country_stats$r_upp <- NA
 #country_stats$rbf_var <- NA
 #country_stats$rbf_lengthscale_sq <- NA
-
 
 # GP model per country
 missing_countries <- c()
@@ -136,25 +139,47 @@ for(iso3i in unique(country_stats$iso3)){
       logit_beta <- log(beta_pred/(1-beta_pred))
     }
     
-    z_predictor <- num_lithouseholds ~ 1 + year
-    z_model <- lm(z_predictor, data = df)
-    z_pred <- predict(z_model, df)
-    plot(df$year, df$num_lithouseholds)
-    lines(df$year, z_pred)
+    z1_predictor <- num_lithouseholds ~ 1 + year
+    z1_model <- lm(z1_predictor, data = df)
+    z1_pred <- predict(z1_model, df)
+    plot(df$year, df$num_lithouseholds, col = "blue")
+    lines(df$year, z1_pred, col = "blue")
+    
+    z2_predictor <- sol_km2 ~ 1 + year
+    z2_model <- lm(z2_predictor, data = df)
+    z2_pred <- predict(z2_model, df)
+    points(df$year, df$sol_km2, col = "red")
+    lines(df$year, z2_pred, col = "red")
+    
     
     # Organize data
     input_dim <- 1 
-    output_dim <- 2 
+    output_dim <- 3 
     
     Y_data <- floor(df$y[mask_data])
-    Z_data <- c(df$num_lithouseholds)#, df$num_lithouseholds)
-    X_data <- c(df$year[mask_data], df$year)
+    Z_data <- c(df$num_lithouseholds, df$sol_km2)
+    X_data <- c(df$year[mask_data], df$year, df$year)
     X_pred <- c(df$year[mask_pred])
     X_data <- matrix(X_data, ncol = 1)
     X_pred <- matrix(X_pred, ncol = 1)
-    T_data <- c(df$y[mask_data])
-    M_prior_data <- c(logit_beta[mask_data], z_pred)
+    T_data <- c(df$num_households[mask_data])
+    M_prior_data <- c(logit_beta[mask_data], z1_pred, z2_pred)
     M_prior_pred <- logit_beta[mask_pred]
+    num_data <- c(sum(mask_data), nrow(df), nrow(df))
+    num_pred <- c(sum(mask_pred), 0, 0)
+    accum_data <- c(0, cumsum(num_data))
+    accum_pred <- c(0, cumsum(num_pred))
+    accum_star <- accum_data + accum_pred
+    
+    plot(df$year[mask_data], df$logit_r[mask_data], pch = 16, col = "red", xlim = c(2000,2015),
+         ylim = c(min(c(df$logit_r,Z_data), na.rm = TRUE), max(c(df$logit_r,Z_data), na.rm = TRUE)) )
+    points(df$year[mask_data], log(Y_data/T_data/(1-Y_data/T_data)), col = "black")
+    points(df$year, Z_data[1:16], col = "blue", pch = 16)
+    points(df$year, Z_data[17:32], col = "green", pch = 17)
+    lines(df$year, c(M_prior_data[1:num_data[1]], M_prior_pred[1:num_pred[1]])[ix.order], col = "red")
+    lines(df$year, M_prior_data[(1+accum_data[2]):accum_data[3]], col = "blue")
+    lines(df$year, M_prior_data[(1+accum_data[3]):accum_data[4]], col = "green")
+    
     
     
     # GP regression 1D 
@@ -166,8 +191,8 @@ for(iso3i in unique(country_stats$iso3)){
                           T_data = T_data,
                           input_dim = input_dim,
                           output_dim = output_dim,
-                          num_data = c(sum(mask_data), nrow(df)),
-                          num_pred = c(sum(mask_pred), 0),
+                          num_data = num_data,
+                          num_pred = num_pred,
                           M_prior_data = M_prior_data,
                           M_prior_pred = M_prior_pred),
                 warmup = 300, iter = 800, chains = 1, verbose = TRUE)
@@ -175,11 +200,65 @@ for(iso3i in unique(country_stats$iso3)){
     
     # Process samples
     mb1_samples <- extract(mb1, permuted = TRUE)
-    mb1_f_mean <- c(mean_f(mb1_samples$GP_data), mean_f(mb1_samples$GP_pred))[ix.order]
-    mb1_f_sd <- c(sd_f(mb1_samples$GP_data), sd_f(mb1_samples$GP_pred))[ix.order]
-    mb1_e_mean <- c(mean_inv_logit(mb1_samples$GP_data), mean_inv_logit(mb1_samples$GP_pred))[ix.order]
-    mb1_e_ciup <- c(ciup_inv_logit(mb1_samples$GP_data), ciup_inv_logit(mb1_samples$GP_pred))[ix.order]
-    mb1_e_cilo <- c(cilo_inv_logit(mb1_samples$GP_data), cilo_inv_logit(mb1_samples$GP_pred))[ix.order]
+    
+    logit_r_mean <- mean_f(cbind( mb1_samples$GP_data[,c(1:num_data[1])], mb1_samples$GP_pred[,1:num_pred[1]]))[ix.order]
+    logit_r_sd <- sd_f(cbind( mb1_samples$GP_data[,c(1:num_data[1])], mb1_samples$GP_pred[,1:num_pred[1]]))[ix.order]
+    f2_mean <- mean_f(mb1_samples$GP_data[,c(num_data[1] + 1:num_data[2])])
+    f2_sd <- sd_f(mb1_samples$GP_data[,c(num_data[1] + 1:num_data[2])])
+    f3_mean <- mean_f(mb1_samples$GP_data[,c(accum_data[3] + 1:num_data[3])])
+    f3_sd <- sd_f(mb1_samples$GP_data[,c(accum_data[1] + 1:num_data[3])])
+    
+    r_mean <- c(mean_inv_logit(mb1_samples$GP_data[,c(1:num_data[1])]), mean_inv_logit(mb1_samples$GP_pred[,1:num_pred[1]]))[ix.order]
+    r_ciup <- c(ciup_inv_logit(mb1_samples$GP_data[,c(1:num_data[1])]), ciup_inv_logit(mb1_samples$GP_pred[,1:num_pred[1]]))[ix.order]
+    r_cilo <- c(cilo_inv_logit(mb1_samples$GP_data[,c(1:num_data[1])]), cilo_inv_logit(mb1_samples$GP_pred[,1:num_pred[1]]))[ix.order]
+    
+    graphics.off()
+    plot(df$year, logit_r_mean, col = "red")
+    lines(df$year, logit_r_mean + 1.96 * sqrt(logit_r_sd), col = "red", lty = 2)
+    lines(df$year, logit_r_mean - 1.96 * sqrt(logit_r_sd), col = "red", lty = 2)
+    points(df$year, df$logit_r, col = "red", pch = 16)
+    lines(df$year, logit_beta, col = "black")
+    
+    plot(df$year, f2_mean, col = "blue")
+    lines(df$year, f2_mean + 1.96 * sqrt(f2_sd), col = "blue", lty = 2)
+    lines(df$year, f2_mean - 1.96 * sqrt(f2_sd), col = "blue", lty = 2)
+    points(df$year, Z_data[1:16], col = "blue", pch = 16)
+    lines(df$year, z1_pred, col = "blue")
+    
+    points(df$year, f3_mean, col = "green")
+    lines(df$year, f3_mean + 1.96 * sqrt(f3_sd), col = "green", lty = 2)
+    lines(df$year, f3_mean - 1.96 * sqrt(f3_sd), col = "green", lty = 2)
+    points(df$year, Z_data[17:32], col = "green", pch = 16)
+    
+    
+    points(df$year, logit_r_mean, col = "red")
+    
+    
+    plot(df$year, r_mean, col = "red")
+    lines(df$year, r_ciup, col = "red", lty = 2)
+    lines(df$year, r_cilo, col = "red", lty = 2)
+    points(df$year, df$r, col = "red", pch = 16)
+    lines(df$year, beta_pred, col = "black")
+    
+    
+    plot(df$year, logit_r_mean, col = "red")
+    points(df$year, f2_mean, col = "blue")
+    
+    hist(mb1_samples$noise_var)
+    hist(mb1_samples$rho[,1])
+    hist(mb1_samples$rho[,2])
+    hist(mb1_samples$rho23)
+    
+    mean(mb1_samples$rho)
+    
+    #mb1_f_sd <- c(sd_f(mb1_samples$GP_data), sd_f(mb1_samples$GP_pred))[ix.order]
+    #mb1_e_mean <- c(mean_inv_logit(mb1_samples$GP_data), mean_inv_logit(mb1_samples$GP_pred))[ix.order]
+    #mb1_e_ciup <- c(ciup_inv_logit(mb1_samples$GP_data), ciup_inv_logit(mb1_samples$GP_pred))[ix.order]
+    #mb1_e_cilo <- c(cilo_inv_logit(mb1_samples$GP_data), cilo_inv_logit(mb1_samples$GP_pred))[ix.order]
+    
+    dim(mb1_samples$GP_data)
+    dim(mb1_samples$GP_pred)
+    plot(df$year, mb1_f_mean)
     
     # Store data 
     csix <- country_stats$iso3 == iso3i
