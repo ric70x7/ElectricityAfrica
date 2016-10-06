@@ -1,7 +1,7 @@
 // Binomial regression with GP
 // ---------------------------
 //
-// Edited: October 4, 2016
+// Edited: October 5, 2016
 
 
 data {
@@ -54,28 +54,26 @@ parameters {
 
 transformed parameters {
   
-  cov_matrix[num_star] K_star[num_countries];
+  cov_matrix[num_star] K_star;
   
-  for (q in 1:num_countries) {
-    for (i in 1:num_years) {
-      for (j in 1:num_years) {
-        
-        // Diagonal blocks
-        for (n in 1:output_dim) {
-          K_star[q,i+(n-1)*num_years,j+(n-1)*num_years] = rbf_var*exp(-K_core[i,j]/rbf_lengthscale_sq);
-        }
-        
-        // Off-diagonal blocks
-        for (n in 1:(output_dim-1)) {
-          K_star[q,i,j+n*num_years] = rho[n]*K_star[q,i,j];
-          K_star[q,i+n*num_years,j] = rho[n]*K_star[q,i,j];
-        }
-        K_star[q,i+num_years,j+2*num_years] = rho[3]*K_star[q,i,j];
-        K_star[q,i+2*num_years,j+num_years] = rho[3]*K_star[q,i,j];
-        
+  for (i in 1:num_years) {
+    for (j in 1:num_years) {
+      
+      // Diagonal blocks
+      for (n in 1:output_dim) {
+        K_star[i+(n-1)*num_years,j+(n-1)*num_years] = rbf_var*exp(-K_core[i,j]/rbf_lengthscale_sq);
       }
-    } 
-  }
+      
+      // Off-diagonal blocks
+      for (n in 1:(output_dim-1)) {
+        K_star[i,j+n*num_years] = rho[n]*K_star[i,j];
+        K_star[i+n*num_years,j] = rho[n]*K_star[i,j];
+      }
+      K_star[i+num_years,j+2*num_years] = rho[3]*K_star[i,j];
+      K_star[i+2*num_years,j+num_years] = rho[3]*K_star[i,j];
+      
+    }
+  } 
   
 }
 
@@ -100,7 +98,7 @@ model {
     for (i in 1:num_years) GP_star[q,i] = GPY[q,i];
     for (i in 1:num_z) GP_star[q,i+num_years] = GPZ[q,i];
     
-    GP_star ~ multi_normal(M_star, K_star[q]);
+    GP_star[q] ~ multi_normal(M_star[q], K_star);
     
     for (i in 1:num_data[q]) Y[q,ix_data[q,i]] ~ binomial_logit(N[q,ix_data[q,i]], GPY[q,ix_data[q,i]]);
     
@@ -112,14 +110,19 @@ model {
   
 }
 
-//generated quantities {
-//  
-//  cov_matrix[num_star] K_new;
-//  
-//  for(i in 1:num_star){
-//    for(j in 1:num_star){
-//      K_new[i,j] <- K_star[i,j];
-//    }
-//  }
-//  
-//}
+generated quantities {
+  
+  //int W[2, num_years];
+  //
+  //for(i in 1:2){
+  //  for(j in 1:num_years) W[i,j] <- Q[i,j];
+  //}
+  
+  //cov_matrix[num_star] K_new;
+  //for(i in 1:num_star){
+  //  for(j in 1:num_star){
+  //    K_new[i,j] <- K_star[i,j];
+  //  }
+  //}
+  
+}
