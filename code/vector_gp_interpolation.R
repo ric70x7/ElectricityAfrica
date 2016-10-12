@@ -1,15 +1,15 @@
 # Annual estimates of household electricity access per country
 # -----------------------------------------------------------------
 #
-# Edited: October 5, 2016
+# Edited: October 6, 2016
+
+graphics.off()
+rm(list = ls())
 
 library(betareg)
 library(rstan)
 rstan_options(aut_write = TRUE)
 options(mc.cores = 10)
-
-graphics.off()
-rm(list = ls())
 
 
 # Link functions function (transforms offests values 0 and 1)
@@ -157,14 +157,13 @@ for(iso3i in iso3list){
 
 
 # This is just to run the model on a subset of countries
-items <- 1:length(num_countries)
+items <- 1:num_countries
 num_countries_ <- length(items)
 output_dim <- 3
 rho_dim <- 3
 num_data_ <- num_data[items]; dim(num_data_) <- num_countries_
 ix_data_ = ix_data[items,]; dim(ix_data_) <- c(num_countries_, num_years)
 N_ <- N[items,]; dim(N_) <- c(num_countries_, num_years)
-X
 Y_ <- Y[items,]; dim(Y_) <- c(num_countries_, num_years)
 Z_ <- cbind(Z1,Z2)[items,]; dim(Z_) <- c(num_countries_, 2*num_years)
 MY_prior_ <- MY_prior[items,]; dim(MY_prior_) <- c(num_countries_, num_years)
@@ -185,7 +184,7 @@ vgpm <- stan(file="code/vector_gp_mixed_noise.stan",
                        Z = Z_,
                        MY_prior = MY_prior_,
                        MZ_prior = MZ_prior_),
-             warmup = 2500, iter = 5000, chains = 1, verbose = TRUE)
+             warmup = 2500, iter = 5000, chains = 4, verbose = TRUE)
 
 
 # Extract samples
@@ -207,27 +206,32 @@ r_ciup <- ciup_inv_logit(vgpm_samples$GPY)
 # Add results to annual_data
 for(iso3i in iso3list){
   ixad <- annual_data$iso3 == iso3i
+  ixst <- dimnames(Y)[[1]] == iso3i
   
   # Electricity access
-  annual_data$r_mean[ixad] <- r_mean[ixad,]
-  annual_data$r_sd[ixad] <- r_sd[ixad,]
-  annual_data$r_cilo[ixad] <- r_cilo[ixad,]
-  annual_data$r_ciup[ixad] <- r_ciup[ixad,]
+  annual_data$r_mean[ixad] <- r_mean[ixst,]
+  annual_data$r_sd[ixad] <- r_sd[ixst,]
+  annual_data$r_cilo[ixad] <- r_cilo[ixst,]
+  annual_data$r_ciup[ixad] <- r_ciup[ixst,]
   
   # Latent variable
-  annual_data$f_mean[ixad] <- f1_mean[ixad,]
-  annual_data$f_sd[ixad] <- f1_sd[ixad,]
+  annual_data$f_mean[ixad] <- f1_mean[ixst,]
+  annual_data$f_sd[ixad] <- f1_sd[ixst,]
   
   # Sum of lights
-  annual_data$sol_mean[ixad] <- f2_mean[ixad,]
-  annual_data$sol_sd[ixad] <- f2_sd[ixad,]
+  annual_data$sol_mean[ixad] <- f2_mean[ixst,]
+  annual_data$sol_sd[ixad] <- f2_sd[ixst,]
   
   # Lit households
-  annual_data$num_lithouseholds_mean[ixad] <- f3_mean[ixad,]
-  annual_data$num_lithouseholds_sd[ixad] <- f3_sd[ixad,]
-  
+  annual_data$num_lithouseholds_mean[ixad] <- f3_mean[ixst,]
+  annual_data$num_lithouseholds_sd[ixad] <- f3_sd[ixst,]
   
 }
+
+# Save data
+save(annual_data, file = "code_output/country_annual_estimates.RData")
+save(vgpm_samples, file = "code_output/country_annual_estimates.RData")
+
 
 
 graphics.off()
@@ -271,6 +275,7 @@ hist(vgpm_samples$rho[,3], xlim = c(0,1))
 
 
 
-# Save data
-save(annual_data, file = "code_output/country_annual_estimates.RData")
-save(vgpm_samples, file = "code_output/country_annual_estimates.RData")
+
+
+
+annual_data$iso3[]

@@ -43,7 +43,7 @@ Edite September 27, 2016
     Add covariates to set3
     
 13) combine_datasets.R
-    Define mesh and data indices
+    Merge DHS surveys and set 3
     
 14) inla_preliminaries.R
     Define mesh and data indices

@@ -16,9 +16,11 @@ electricity_access$iso3 <- paste(electricity_access$iso3)
 household_members <- subset(household_members, year >= 2000)
 electricity_access <- subset(electricity_access, year >= 2000)
 
+
 # World Development Index data
 wdi <- read.csv("data/World_Development_Indicators/Data2.csv")
 wdi$Country.Code <- paste(wdi$Country.Code)
+
 
 # Shape file of Africa
 afri_main <- shapefile("data/Africa_main_country/Africa_main_country.shp")
@@ -41,22 +43,24 @@ for(i in 1:nrow(household_members)){
 
 
 # Fill-in data on electricity access
+# First WDI values
+for(iso3i in wdi$Country.Code){
+  ix00 <- raw_country_stats$year == 2000 & raw_country_stats$iso3 == iso3i
+  ix10 <- raw_country_stats$year == 2010 & raw_country_stats$iso3 == iso3i
+  ix12 <- raw_country_stats$year == 2012 & raw_country_stats$iso3 == iso3i
+  
+  raw_country_stats$r[ix00] <-  wdi$YR2000[wdi$Country.Code == iso3i]/100
+  raw_country_stats$r[ix10] <-  wdi$YR2010[wdi$Country.Code == iso3i]/100
+  raw_country_stats$r[ix12] <-  wdi$YR2012[wdi$Country.Code == iso3i]/100
+}
+
+
+# Then DHS/MIS/AIS values (overwrite WDI if both are available)
 for(i in 1:nrow(electricity_access)){
   yi <- electricity_access$year[i]
   iso3i <- electricity_access$iso3[i]
   ix <- raw_country_stats$year == yi & raw_country_stats$iso3 == iso3i
   raw_country_stats$r[ix] <- electricity_access$r[i]/100
-}
-
-
-# Fill-in data on electricity access from WDI
-for(iso3i in wdi$Country.Code){
-  ix <- raw_country_stats$year == 2000 & raw_country_stats$iso3 == iso3i
-  if(sum(ix) > 0){
-    raw_country_stats$r[ix] <- ifelse(is.na(raw_country_stats$r[ix]),
-                                      wdi$YR2000[wdi$Country.Code == iso3i]/100,
-                                      raw_country_stats$r[ix])
-  }
 }
 
 
