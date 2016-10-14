@@ -1,4 +1,6 @@
 # Figures: Data per country/year/survey
+#
+# Edited October 13 2016
 
 
 require("rgdal") # requires sp, will use proj.4 if installed
@@ -119,7 +121,7 @@ for(iso3i in unique(afri_main.df$ISO3)){
 
 
 # DHS country-level data points
-font_size = 18
+font_size = 15
 dhs_map <- ggplot(afri_main.df, aes(long, lat)) +
            geom_polygon(aes(group = group), colour = "grey", fill = "white") +
            geom_polygon(data = subset(adf1, years > 0), aes(long, lat, group = group,  fill = factor(years)),  colour = "grey") +
@@ -147,26 +149,27 @@ wdi_map <- ggplot(afri_main.df) + aes(long, lat, group = group) +
 pts_map <- ggplot(afri_main.df, aes(long, lat)) +
            geom_polygon(aes(group = group), colour = "grey", fill = "white") +
            geom_point(data = df.samples, aes(lon, lat, color = survey)) +
-           scale_color_manual(values = c("#6495ED", "#EE6A50"), guide = guide_legend(title = "Surveyed\npoints")) +
+           scale_color_manual(values = c("#6495ED", "#EE6A50"), guide = guide_legend(title = "Survey\nlocations")) +
            theme_map(base_size = font_size) +
            coord_equal()
 
 # Annual country-level data points
 timeline <- ggplot(year_surveys, aes(factor(year))) + geom_bar(aes(fill = survey)) +
             scale_fill_manual(values = c("#6495ED", "#EE6A50", "#86C67C"), guide = guide_legend(title = "Source")) +
-            ylab("Countries with data") +
+            ylab("No. countries") +
             theme_hc(base_size = font_size) +
             theme(axis.title.x = element_blank(),
                   axis.ticks.x = element_blank(),
                   axis.text.x = element_text(angle = 90, hjust = 1))
 
+
 graphics.off()
 
-
-ggdraw(xlim = c(0,3), ylim = c(0,2)) +
-  draw_plot(dhs_map, x = 0, y = 1, width = 1, height = 1) +
-  draw_plot(mis_map, x = 1, y = 1, width = 1, height = 1) +
-  draw_plot(wdi_map, x = 2, y = 1, width = 1, height = 1) +
-  draw_plot(timeline, x = 0, y = 0, width = 2, height = 1) +
-  draw_plot(pts_map, x = 2, y = 0, width = 1, height = 1) +
-  draw_plot_label(c("A", "B", "C", "D", "E"), c(0, 1, 2, 0, 2), c(2, 2, 2, 1, 1), size = 15)
+fig_data <- ggdraw(xlim = c(0,12), ylim = c(0,8)) +
+            draw_plot(dhs_map, x = 0, y = 4, width = 4, height = 4) +
+            draw_plot(mis_map, x = 4, y = 4, width = 4, height = 4) +
+            draw_plot(wdi_map, x = 8, y = 4, width = 4, height = 4) +
+            draw_plot(timeline,x = 0, y = 0, width = 8, height = 4) +
+            draw_plot(pts_map, x = 8, y = 0, width = 4, height = 4) +
+            draw_plot_label(c("A", "B", "C", "D", "E"), c(0, 4, 8, 0, 8), c(8, 8, 8, 4, 4), size = 18, color = "grey")
+save_plot("figs/fig_data.pdf", fig_data, base_width = 12, base_height = 8)
