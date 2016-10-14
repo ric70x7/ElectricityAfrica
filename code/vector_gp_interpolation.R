@@ -14,7 +14,7 @@ options(mc.cores = 10)
 
 # Link functions function (transforms offests values 0 and 1)
 logit <- function(x){
-  y <- ifelse(x == 0 | x == 1, -1 + (.001)^(1-x) + (1-.001)^(x), x)
+  y <- ifelse(x == 0 | x == 1, -1 + (.0001)^(1-x) + (1-.0001)^(x), x)
   return(log(y/(1-y)))
 }
 inv_logit <- function(x) 1/(1+exp(-x))
@@ -101,8 +101,11 @@ for(iso3i in iso3list){
   if(sum(mask_obsv) > 2){
     
     # Beta regression
+    df4beta <- subset(df, mask_obsv)
+    df4beta$reported_r <- sapply(df4beta$reported_r, FUN = function(x) ifelse(x==1, x-.0001, x))
+    df4beta$reported_r <- sapply(df4beta$reported_r, FUN = function(x) ifelse(x==0, x+.0001, x))
     r_predictor <- reported_r ~ 1 +  year
-    r_model <- betareg(r_predictor, data = subset(df, mask_obsv))
+    r_model <- betareg(r_predictor, data = df4beta)
     beta_pred <- predict(r_model, newdata = df)
     logit_beta <- logit(beta_pred)
     
@@ -184,12 +187,12 @@ vgpm <- stan(file="code/vector_gp_mixed_noise.stan",
                        Z = Z_,
                        MY_prior = MY_prior_,
                        MZ_prior = MZ_prior_),
-             warmup = 2500, iter = 5000, chains = 4, verbose = TRUE)
+             warmup = 2500, iter = 5000, chains = 20, verbose = TRUE)
 
 
 # Extract samples
 vgpm_samples <- extract(vgpm, permuted = TRUE)
-
+save(vgpm_samples, file = "code_output/country_annual_estimates.RData")
 
 # Compute mean, sd and credible intervals
 f1_mean <- mean_f(vgpm_samples$GPY)
@@ -230,52 +233,48 @@ for(iso3i in iso3list){
 
 # Save data
 save(annual_data, file = "code_output/country_annual_estimates.RData")
-save(vgpm_samples, file = "code_output/country_annual_estimates.RData")
 
 
 
-graphics.off()
-
-item <- 5; mask_item <- ix_data[item, 1:num_data[item]]
-
-plot(X, f1_mean[item,], col = "red", ylim = c(min(z_mean[item,] - 2*z_sd[item,]),max(z_mean[item,] + 2*z_sd[item,]) ) )
-lines(X, f1_mean[item,] + 1.96 * f1_sd[item,], col = "red", lty = 2)
-lines(X, f1_mean[item,] - 1.96 * f1_sd[item,], col = "red", lty = 2)
-lines(X, MY_prior[item,], col = "red")
-points(X[mask_item], logit(Y[item,mask_item]/N[item,mask_item]), col = "red", pch = 16)
-
-#plot(X, f2_mean, col = "blue")
-points(X, f2_mean[item,], col = "blue")
-lines(X, f2_mean[item,] + 1.96 * f2_sd[item,], col = "blue", lty = 2)
-lines(X, f2_mean[item,] - 1.96 * f2_sd[item,], col = "blue", lty = 2)
-lines(X, MZ1_prior[item,], col = "blue")
-points(X[1:14], Z1[item,1:14], col = "blue", pch = 16)
-
-points(X, f3_mean[item,], col = "green")
-lines(X, f3_mean[item,] + 1.96 * f3_sd[item,], col = "green", lty = 2)
-lines(X, f3_mean[item,] - 1.96 * f3_sd[item,], col = "green", lty = 2)
-lines(X, MZ2_prior[item,], col = "green")
-points(X[1:14], Z2[item, 1:14], col = "green", pch = 16)
-
-
-plot(X, r_mean[item,], col = "red", ylim = c(0,1))
-lines(X, r_ciup[item,], col = "red", lty = 2)
-lines(X, r_cilo[item,], col = "red", lty = 2)
-lines(X, MR_prior[item,], col = "red")
-points(X[mask_item], Y[item,mask_item]/N[item,mask_item], col = "red", pch = 16)
-
-
-
-hist(vgpm_samples$noise_var)
-hist(vgpm_samples$rbf_var)
-hist(vgpm_samples$rbf_lengthscale_sq)
-hist(vgpm_samples$rho[,1], xlim = c(0,1))
-hist(vgpm_samples$rho[,2], xlim = c(0,1))
-hist(vgpm_samples$rho[,3], xlim = c(0,1))
-
-
-
-
-
-
-annual_data$iso3[]
+#graphics.off()
+#
+#item <- 5; mask_item <- ix_data[item, 1:num_data[item]]
+#
+#plot(X, f1_mean[item,], col = "red", ylim = c(min(z_mean[item,] - 2*z_sd[item,]),max(z_mean[item,] + 2*z_sd[item,]) ) )
+#lines(X, f1_mean[item,] + 1.96 * f1_sd[item,], col = "red", lty = 2)
+#lines(X, f1_mean[item,] - 1.96 * f1_sd[item,], col = "red", lty = 2)
+#lines(X, MY_prior[item,], col = "red")
+#points(X[mask_item], logit(Y[item,mask_item]/N[item,mask_item]), col = "red", pch = 16)
+#
+##plot(X, f2_mean, col = "blue")
+#points(X, f2_mean[item,], col = "blue")
+#lines(X, f2_mean[item,] + 1.96 * f2_sd[item,], col = "blue", lty = 2)
+#lines(X, f2_mean[item,] - 1.96 * f2_sd[item,], col = "blue", lty = 2)
+#lines(X, MZ1_prior[item,], col = "blue")
+#points(X[1:14], Z1[item,1:14], col = "blue", pch = 16)
+#
+#points(X, f3_mean[item,], col = "green")
+#lines(X, f3_mean[item,] + 1.96 * f3_sd[item,], col = "green", lty = 2)
+#lines(X, f3_mean[item,] - 1.96 * f3_sd[item,], col = "green", lty = 2)
+#lines(X, MZ2_prior[item,], col = "green")
+#points(X[1:14], Z2[item, 1:14], col = "green", pch = 16)
+#
+#
+#plot(X, r_mean[item,], col = "red", ylim = c(0,1))
+#lines(X, r_ciup[item,], col = "red", lty = 2)
+#lines(X, r_cilo[item,], col = "red", lty = 2)
+#lines(X, MR_prior[item,], col = "red")
+#points(X[mask_item], Y[item,mask_item]/N[item,mask_item], col = "red", pch = 16)
+#
+#
+#
+#hist(vgpm_samples$noise_var)
+#hist(vgpm_samples$rbf_var)
+#hist(vgpm_samples$rbf_lengthscale_sq)
+#hist(vgpm_samples$rho[,1], xlim = c(0,1))
+#hist(vgpm_samples$rho[,2], xlim = c(0,1))
+#hist(vgpm_samples$rho[,3], xlim = c(0,1))
+#
+#
+#annual_data$iso3[]
+#
