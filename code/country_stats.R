@@ -1,7 +1,7 @@
 # Compute electricity access and households size per country
 # ----------------------------------------------------------
 #
-# Edited: September 26, 2016
+# Edited: October 14, 2016
 
 
 library(raster)
