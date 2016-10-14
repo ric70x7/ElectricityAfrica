@@ -192,7 +192,7 @@ vgpm <- stan(file="code/vector_gp_mixed_noise.stan",
 
 # Extract samples
 vgpm_samples <- extract(vgpm, permuted = TRUE)
-save(vgpm_samples, file = "code_output/country_annual_estimates.RData")
+save(vgpm_samples, file = "code_output/vgpm_samples.RData")
 
 # Compute mean, sd and credible intervals
 f1_mean <- mean_f(vgpm_samples$GPY)
