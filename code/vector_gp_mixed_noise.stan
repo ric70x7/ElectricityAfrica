@@ -87,7 +87,7 @@ model {
   noise_var ~ gamma(1, 1);
   rho[1] ~ beta(2, 5);
   rho[2] ~ beta(2, 5);
-  rho[3] ~ beta(1, 3);
+  rho[3] ~ beta(5, 2);
   
   for (q in 1:num_countries) {
     // Prior mean
