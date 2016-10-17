@@ -1,7 +1,7 @@
 # Add covariates to set3
 # ----------------------------
 #
-# Edited: September 28, 2016
+# Edited: October 15, 2016
 # Covariates are also standardized/transformend
 
 
@@ -66,13 +66,13 @@ df3 <- subset(df3, iso3 != "COM") #FIXME
 for(iso3j in unique(df3$iso3)){
   years_j <- unique(subset(df3, iso3 == iso3j)$year)
   for(yj in years_j){
-    csix <- country_stats$year == yj & country_stats$iso3 == iso3j
+    csix <- annual_data$year == yj & annual_data$iso3 == iso3j
     dfix <- df3$year == yj & df3$iso3 == iso3j
-    df3$country_r_mean[dfix] <- country_stats$r_mean[csix]
-    df3$country_r_low[dfix] <- country_stats$r_low[csix]
-    df3$country_r_upp[dfix] <- country_stats$r_upp[csix]
-    df3$country_f_mean[dfix] <- country_stats$f_mean[csix]
-    df3$country_f_sd[dfix] <- country_stats$f_sd[csix]
+    df3$country_r_mean[dfix] <- annual_data$r_mean[csix]
+    df3$country_r_low[dfix] <- annual_data$r_cilo[csix]
+    df3$country_r_upp[dfix] <- annual_data$r_ciup[csix]
+    df3$country_f_mean[dfix] <- annual_data$f_mean[csix]
+    df3$country_f_sd[dfix] <- annual_data$f_sd[csix]
   }
 }
 
