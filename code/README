@@ -1,28 +1,37 @@
 Files content and chronological order
 -------------------------------------
-Edite September 27, 2016
+Edite October 17, 2016
 
 
  1) interpolate_population.R   
     Create layers of population (5Km) 2001-2004, 2006-2009, 2011-2014 by interpolating
     the available data 2000, 2005, 2010, 2015
+    Generates file: code_output/Population/GPW4_year.tif
     
- 2) binomial_model.stan    
-    Binomial regression model in rstan
- 
- 3) binomial_sampler.stan    
-    Binomial samples generator in rstan
-
- 4) country_stats.R 
+ 2) country_stats.R 
     Compute electricity access and households size per country
+    Generates file: code_output/country_stats.RData
+    
+ 3) vector_gp_mixed_noise.stan    
+    Multiple output GP with mixed Binomial and Gaussian likelihoods
+ 
+ 4) vector_gp_interpolation.R    
+    Calls vector_gp_mixed_noise.stan and generates samples form the process
+    Generates file: code_output/country_annual_estimates.RData
+                    code_output/vgpm_samples.RData
 
  5) household_rasters.R   
     Create layers of number of households (5Km) 2001-2015.
     Divide pixel-population by average number of household members per country.
+    Generates files: code_output/Households/HHW4_year.tif
     
  6) z_covariates.R   
     Create layers of standardized covariates for the geostatistical model.
-    lit, zntl, zhouse, zpop
+    Generates files: code_output/z_covariates/logit_r_year.tif
+                     code_output/z_covariates/lit_year.tif
+                     code_output/z_covariates/zntl_year.tif
+                     code_output/z_covariates/zpop_year.tif
+                     code_output/z_covariates/zhouse_year.tif
     
  7) dhs_preprocess.R
     Clean DHS surveys and organize them in a data frame
@@ -48,5 +57,39 @@ Edite September 27, 2016
 14) inla_preliminaries.R
     Define mesh and data indices
   
-15) core_model_w_latent_pred.R
+15) inla_model_w_offsets.R
     Code for running INLA
+    
+16) inla_model_validation.R
+    ROC curves, and confusion matrices for test data
+    
+17) inla_model_interpolation_check.R
+    Check the posterior approximation based on the interpolation of the latent field
+    
+18) inla_model_rasters.R
+    Raster file of predicted probability of electricity
+    
+19) inla_model_country_aggregates.R
+    Aggregated data per country
+    
+20) inla_model_ggplots.R
+    gplots based on the raster files
+    
+    
+..) fig_data.R
+    Figure of data sources per country/year
+    
+..) fig_drivers.R
+    Comparison between electricity access, lit pixels and light per Km^2
+    
+..) fig_zntl.R
+    Comparison between electricity access offsets around the country average and zntl and zhouse
+    
+..) fig_posterior.R
+    Prior and posterior distribution of Multioutput GP hyperparameters
+    
+..) fig_gpfit.R
+    GP estimates of electricity access
+    
+    
+    
