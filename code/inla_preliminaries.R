@@ -9,10 +9,18 @@ library(raster)
 library(maptools)
 
 
-graphics.off()
-rm(list = ls())
-load("code_output/train_and_test_data.RData")
+#graphics.off()
+#rm(list = ls())
+#load("code_output/train_and_test_data.RData")
+load("code_output/merged_data.RData")
 afri_main <- readShapePoly("data/Africa_main_country/Africa_main_country.shp")
+
+
+# Split data
+ix <- sample(1:sum(df$obfuscated))
+df.train <- subset(df, obfuscated)[ix[1:15000],]
+df.test1 <- subset(df, obfuscated)[ix[15001:sum(df$obfuscated)],]
+df.test2 <- subset(df, !obfuscated)
 
 
 #DELETE these lines
@@ -20,11 +28,10 @@ afri_main <- readShapePoly("data/Africa_main_country/Africa_main_country.shp")
 #afri_main <- afri_main[afri_main$ISO3 %in% isosample, ]
 #df.train <- subset(df.train, iso3 %in% isosample)
 #df.test1 <- subset(df.test1, iso3 %in% isosample)
-df.train <- df.train[1:1000,]
-df.test1 <- df.test1[1:100,]
-df.test2 <- df.test2[1:100,]
+#df.train <- df.train[1:1000,]
+#df.test1 <- df.test1[1:100,]
+#df.test2 <- df.test2[1:100,]
 
-xy <- df.train[, c("lon", "lat")]
 
 
 # Define a list to store metadata
@@ -40,11 +47,12 @@ mesh.t <- inla.mesh.1d(loc = df.train$year, interval = c(min(df.train$year), max
 
 # Spatial mesh
 afri_border <- unionSpatialPolygons(afri_main, rep(1, nrow(afri_main)))
-  afri_segment <- inla.sp2segment(afri_border)
+afri_segment <- inla.sp2segment(afri_border)
 mesh.s <- inla.mesh.2d(boundary = afri_segment, max.edge = 1.8, cutoff = .9)
 #  mesh.s <- inla.mesh.2d(boundary = afri_segment, max.edge = .3, cutoff = .2)
-plot(mesh.s)
-points(xy[,1],xy[,2], col = "red", pch = 16)
+#xy <- df[, c("lon", "lat")]
+#plot(mesh.s)
+#points(xy[,1],xy[,2], col = "red", pch = 16)
 afr.spde <- inla.spde2.matern(mesh = mesh.s, alpha = 2)
 
 

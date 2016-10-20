@@ -1,7 +1,9 @@
-# Offsets per pixel
-# -----------------
+# Standardized covariates
+# -----------------------------------
 #
-# Edited September 28, 2016
+# Edited October 19, 2016
+#
+# Standardization parameters are computed for each country
 
 rm(list = ls())
 graphics.off()

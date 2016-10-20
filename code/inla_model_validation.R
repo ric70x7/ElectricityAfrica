@@ -2,7 +2,6 @@
 # ------------------------
 #
 # Edited: October 17, 2016
-# This is the core file (train and test with non obfuscated data)
 
 
 library(INLA)
@@ -23,7 +22,6 @@ for(i in seq(nrow(df.train))){
   predicted.train.mean[i] <- inla.emarginal(inla.link.invlogit,
                                            m_core$marginals.linear.predictor[meta_core$ix$stack$train][[i]] )
 }
-plot(df.train$r, predicted.train.mean)
 
 
 # Test1 data
@@ -32,7 +30,6 @@ for(i in seq(nrow(df.test1))){
   predicted.test1.mean[i] <- inla.emarginal(inla.link.invlogit,
                                             m_core$marginals.linear.predictor[meta_core$ix$stack$test1][[i]] )
 }
-plot(df.test1$r, predicted.test1.mean)
 
 
 # Test2 data
@@ -41,7 +38,6 @@ for(i in seq(nrow(df.test2))){
   predicted.test2.mean[i] <- inla.emarginal(inla.link.invlogit,
                                             m_core$marginals.linear.predictor[meta_core$ix$stack$test2][[i]] )
 }
-plot(df.test2$electricity, predicted.test2.mean)
 
 
 dftrain <- data.frame(observed = df.train$r, predicted = predicted.train.mean)
@@ -58,7 +54,7 @@ ggplot(dftest1, aes(observed, predicted)) + geom_point(color = myblue, alpha = .
 ggplot(dftest1, aes(predicted)) + geom_density(aes(fill = factor(dummy)), alpha = .5) + xlim(0,1)
 
 
-dftest2 <- data.frame(observed = df.test2$electricity, predicted = predicted.test2.mean)
+dftest2 <- data.frame(observed = df.test2$r, predicted = predicted.test2.mean)
 ggplot(dftest2, aes(observed, predicted)) + geom_point(color = myred, alpha = .5)
 ggplot(dftest2, aes(predicted)) + geom_density(aes(fill = factor(observed)), alpha = .5) + xlim(0,1)
 
@@ -66,8 +62,8 @@ ggplot(dftest2, aes(predicted)) + geom_density(aes(fill = factor(observed)), alp
 false_pos <- c()
 true_pos <- c()
 for(threshold in 1:1000/1000){
-  false_pos <- c(false_pos, sum(df.test2$electricity == 0 & predicted.test2.mean > threshold)/sum(df.test2$electricity==0))
-  true_pos <- c(true_pos, sum(df.test2$electricity == 1 & predicted.test2.mean > threshold)/sum(df.test2$electricity==1))
+  false_pos <- c(false_pos, sum(df.test2$r == 0 & predicted.test2.mean > threshold)/sum(df.test2$r==0))
+  true_pos <- c(true_pos, sum(df.test2$r == 1 & predicted.test2.mean > threshold)/sum(df.test2$r==1))
 }
 plot(false_pos, true_pos, type = "l")
 
@@ -81,10 +77,10 @@ matrix(100 * c(sum(df.test1$r <= .5 & predicted.test1.mean <= threshold)/nrow(df
 
 
 threshold = .5
-matrix(100 * c(sum(df.test2$electricity == 0 & predicted.test2.mean <= threshold)/nrow(df.test2),
-               sum(df.test2$electricity == 0 & predicted.test2.mean > threshold)/nrow(df.test2),
-               sum(df.test2$electricity == 1 & predicted.test2.mean <= threshold)/nrow(df.test2),
-               sum(df.test2$electricity == 1 & predicted.test2.mean > threshold)/nrow(df.test2)),
+matrix(100 * c(sum(df.test2$r == 0 & predicted.test2.mean <= threshold)/nrow(df.test2),
+               sum(df.test2$r == 0 & predicted.test2.mean > threshold)/nrow(df.test2),
+               sum(df.test2$r == 1 & predicted.test2.mean <= threshold)/nrow(df.test2),
+               sum(df.test2$r == 1 & predicted.test2.mean > threshold)/nrow(df.test2)),
        nrow = 2, byrow = TRUE)
 
 

@@ -25,13 +25,13 @@ Edite October 17, 2016
     Divide pixel-population by average number of household members per country.
     Generates files: code_output/Households/HHW4_year.tif
     
- 6) z_covariates.R   
-    Create layers of standardized covariates for the geostatistical model.
-    Generates files: code_output/z_covariates/logit_r_year.tif
-                     code_output/z_covariates/lit_year.tif
-                     code_output/z_covariates/zntl_year.tif
-                     code_output/z_covariates/zpop_year.tif
-                     code_output/z_covariates/zhouse_year.tif
+## 6) z_covariates.R   
+##    Create layers of standardized covariates for the geostatistical model.
+##    Generates files: code_output/z_covariates/logit_r_year.tif
+##                     code_output/z_covariates/lit_year.tif
+##                     code_output/z_covariates/zntl_year.tif
+##                     code_output/z_covariates/zpop_year.tif
+##                     code_output/z_covariates/zhouse_year.tif
     
  7) dhs_preprocess.R
     Clean DHS surveys and organize them in a data frame
@@ -42,17 +42,20 @@ Edite October 17, 2016
  9) third_set_surveys.R
     Put third set of surveys in a data frame
     
-10) dhs_w_covariates.R
-    Add covariates to data frame with DHS data
+#10) dhs_w_covariates.R
+#    Add covariates to data frame with DHS data
     
-11) other_data_w_covariates.R
-    Add covariates to data frame with additional surveys
+#11) other_data_w_covariates.R
+#    Add covariates to data frame with additional surveys
     
-12) set3_w_covariates.R
-    Add covariates to set3
+#12) set3_w_covariates.R
+#    Add covariates to set3
     
 13) combine_datasets.R
     Merge DHS surveys and set 3
+    
+..) logit_r_offsets    
+    Create rasters of linear predictor offsets
     
 14) inla_preliminaries.R
     Define mesh and data indices
