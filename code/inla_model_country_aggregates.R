@@ -21,22 +21,22 @@ for(iso3i in iso3list){
   print(iso3i)
   for(i in 1:16){
     yi <- 1999 + i
-    households <- raster(paste("code_output/Households/HHW4_", yi, ".tif", sep = ""))
+    #households <- raster(paste("code_output/Households/HHW4_", yi, ".tif", sep = ""))
+    pop <- raster(paste("code_output/Population/GPW4_", yi, ".tif", sep = ""))
     access <- raster(paste("code_output/Electricity/access_", yi, ".tif", sep = ""))
-    isohouse <- mask(households, isoshape)
+    isopop <- mask(pop, isoshape)
     isoaccess <- mask(access, isoshape)
     ix <- annual_data$iso3 == iso3i & annual_data$year == yi
-    annual_data$agg_raster[ix] <- sum(isoaccess[!is.na(isoaccess)] * isohouse[!is.na(isohouse)])/sum(isohouse[!is.na(isohouse)])
-    print(yi)
+    annual_data$agg_raster[ix] <- sum(isoaccess[!is.na(isoaccess)] * isopop[!is.na(isoaccess)])/sum(isopop[!is.na(isoaccess)])
   }
 }
 
-num <- 12
+
+save(annual_data, file = "code_output/raster_aggregates.RData")
+
+num <- 1
 ggplot(subset(annual_data, iso3 == iso3list[num]), aes(x = year)) + ylim(0,1) +
  geom_line(aes(y = r_mean), color = "blue") +
  geom_line(aes(y = agg_raster), color = "red") + xlab(iso3list[num])
 
-
-BEN
-annual_data[annual_data$iso3 == "BEN",]
 

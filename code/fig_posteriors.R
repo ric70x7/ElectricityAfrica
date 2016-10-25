@@ -16,7 +16,7 @@ font_size <- 15
 
 
 rbf_var= density(vgpm_samples$rbf_var)
-rbf_lengthscale_sq = density(vgpm_samples$rbf_lengthscale_sq)
+rbf_lengthscale = density(vgpm_samples$rbf_lengthscale)
 noise_var = density(vgpm_samples$noise_var)
 rho_1 = density(vgpm_samples$rho[,1])
 rho_2 = density(vgpm_samples$rho[,2])
@@ -40,18 +40,18 @@ plot_rbf_var <-  ggplot(data.frame(x = sapply(rbf_var$x, function(x) ifelse(x<0,
         scale_color_manual(name=TeX("$Kernel - \\sigma^2\\;$"), values=c(mygreen, myred)) 
 
 
-plot_rbf_lengthscale_sq <-  ggplot(data.frame(x = sapply(rbf_lengthscale_sq$x, function(x) ifelse(x<0,0,x)), y = rbf_lengthscale_sq$y, dummy = "posterior"), aes(x,y)) +
+plot_rbf_lengthscale <-  ggplot(data.frame(x = sapply(rbf_lengthscale$x, function(x) ifelse(x<0,0,x)), y = rbf_lengthscale$y, dummy = "posterior"), aes(x,y)) +
         geom_polygon(fill = mygreen) +
         geom_line(aes(col=dummy)) +
         geom_line(data = data.frame(x = xx2, y = dgamma(xx2, 2, 2), dummy = "prior"), aes(x,y, col = dummy), size = 1) +
-        xlim(0,3) +
+        xlim(0,2) +
         theme_hc(base_size = font_size) +
         theme(axis.title.y = element_blank(),
               axis.title.x = element_blank(),
               axis.ticks.x = element_blank(),
               axis.text.y = element_blank(),
               legend.position = c(.35,.85)) +
-        scale_color_manual(name=TeX("lengthscale$^2$"), values=c(mygreen, myred)) 
+        scale_color_manual(name=TeX("lengthscale"), values=c(mygreen, myred)) 
 
 
 plot_noise_var <-  ggplot(data.frame(x = sapply(noise_var$x, function(x) ifelse(x<0,0,x)), y = noise_var$y, dummy = "posterior"), aes(x,y)) +
@@ -79,7 +79,7 @@ plot_byv <-  ggplot(data.frame(x = sapply(rho_1$x, function(x) ifelse(x<0,0,x)),
               axis.ticks.x = element_blank(),
               axis.text.y = element_blank(),
               legend.position = c(.7,.85)) +
-        scale_color_manual(name=TeX("$b_{yv}"), values=c(mygreen, myred)) 
+        scale_color_manual(name=TeX("$\\rho_{yv}"), values=c(mygreen, myred)) 
 
 
 plot_byw <-  ggplot(data.frame(x = sapply(rho_2$x, function(x) ifelse(x<0,0,x)), y = rho_2$y, dummy = "posterior"), aes(x,y)) +
@@ -93,12 +93,12 @@ plot_byw <-  ggplot(data.frame(x = sapply(rho_2$x, function(x) ifelse(x<0,0,x)),
               axis.ticks.x = element_blank(),
               axis.text.y = element_blank(),
               legend.position = c(.7,.85)) +
-        scale_color_manual(name=TeX("$b_{yw}"), values=c(mygreen, myred)) 
+        scale_color_manual(name=TeX("$\\rho_{yw}"), values=c(mygreen, myred)) 
 
 plot_bvw <-  ggplot(data.frame(x = sapply(rho_3$x, function(x) ifelse(x>1,1,x)), y = rho_3$y, dummy = "posterior"), aes(x,y)) +
         geom_polygon(fill = mygreen) +
         geom_line(aes(col=dummy)) +
-        geom_line(data = data.frame(x = xx, y = dbeta(xx, 1, 3), dummy = "prior"), aes(x,y, col = dummy), size = 1) +
+        geom_line(data = data.frame(x = xx, y = dbeta(xx, 5, 2), dummy = "prior"), aes(x,y, col = dummy), size = 1) +
         xlim(0,1) +
         theme_hc(base_size = font_size) +
         theme(axis.title.y = element_blank(),
@@ -106,12 +106,12 @@ plot_bvw <-  ggplot(data.frame(x = sapply(rho_3$x, function(x) ifelse(x>1,1,x)),
               axis.ticks.x = element_blank(),
               axis.text.y = element_blank(),
               legend.position = c(.3,.85)) +
-        scale_color_manual(name=TeX("$b_{vw}"), values=c(mygreen, myred)) 
+        scale_color_manual(name=TeX("$\\rho_{vw}"), values=c(mygreen, myred)) 
 
 
 fig_posteriors <- ggdraw(xlim = c(0,12), ylim = c(0,8)) +
             draw_plot(plot_rbf_var, x = 0, y = 4, width = 4, height = 3.7) +
-            draw_plot(plot_rbf_lengthscale_sq, x = 4, y = 4, width = 4, height = 3.7) +
+            draw_plot(plot_rbf_lengthscale, x = 4, y = 4, width = 4, height = 3.7) +
             draw_plot(plot_noise_var, x = 8, y = 4, width = 4, height = 3.7) +
             draw_plot(plot_byv, x = 0, y = 0, width = 4, height = 3.7) +
             draw_plot(plot_byw, x = 4, y = 0, width = 4, height = 3.7) +

@@ -1,9 +1,11 @@
-# Standardized covariates
+# Standardized NTL
 # -----------------------------------
 #
-# Edited October 19, 2016
+# Edited October 21, 2016
 #
+# Standardization is done on the log scale
 # Standardization parameters are computed for each country
+# NTL pixels with zero light have also zero in the standardized log scale
 
 rm(list = ls())
 graphics.off()
@@ -11,7 +13,7 @@ library(raster)
 
 load("code_output/country_annual_estimates.RData")
 load("code_output/z_params.RData")
-afri_countries <- unique(country_stats$iso3)
+afri_countries <- unique(annual_data$iso3)
 
 # Raster files
 years <- 2000:2015
@@ -38,76 +40,75 @@ make_raster <- function(x, ref_raster = ntl_x){
 
 
 # Store standardization parameters
-df.z_factors <- data.frame(iso3 = sort(unique(country_stats$iso3)))
-z_year_mean <- mean(2000:2015)
-z_year_sd <- sd(2000:2015)
+df.z_factors <- data.frame(iso3 = sort(afri_countries))
 
 
 for(i in c(10, 1:9, 11:16)){
   
   yi <- years[i]
-  offset_layer <- rep(NA, length(ntl_x[]))
-  lit_layer <- rep(NA, length(ntl_x[]))
-  z.ntl_layer <- rep(NA, length(ntl_x[]))
-  z.house_layer <- rep(NA, length(ntl_x[]))
-  z.pop_layer <- rep(NA, length(ntl_x[]))
-  
   ntl.i <- raster(paste("data/ntl/Inland_water_masked_5k/ts", min(2013,yi), "W_template.tif", sep = ""))
+  ntl.i[ntl.i>64] <- NA
+  
+  lit_layer <- sapply(ntl.i[], FUN = function(x) min(1, x))
+  ntl.i[] <- log(1+ntl.i[])
+  
+  z.ntl_layer <- rep(NA, length(ntl.i[]))
+  
   pop.i <- raster(paste("code_output/Population/GPW4_", yi, ".tif", sep = ""))
-  house.i <- raster(paste("code_output/Households/HHW4_", yi, ".tif", sep = ""))
+  pop.i <- log(1+pop.i[])
+  
+  z.pop_p_layer <- rep(NA, length(ntl.i[]))
+  z.pop_n_layer <- rep(NA, length(ntl.i[]))
   
 
   for(iso3j in afri_countries){ 
     shp_boundary <- afri_main[afri_main$ISO3 == iso3j,]
-    raster_mask <- mask(ntl_x, shp_boundary)
+    raster_mask <- mask(ntl.i, shp_boundary)
     cells_mask <- !is.na(raster_mask[])
     zix <- df.z_factors$iso3 == iso3j
     
-    iso3j_offset <- country_stats$r_mean[country_stats$iso3 == iso3j & country_stats$year == yi]
-    offset_layer[cells_mask] <- log(iso3j_offset/(1-iso3j_offset)) 
-    
-    lit_layer[cells_mask] <- sapply(ntl.i[cells_mask], FUN = function(x) min(1, x))
-    
     # Compute standardization parameters just for year 2000
     if(i == 10){
-      df.z_factors$ntl_mean[zix] <- mean((ntl.i[cells_mask])[ntl.i[cells_mask]>0])
-      df.z_factors$ntl_sd[zix] <- sd((ntl.i[cells_mask])[ntl.i[cells_mask]>0])
+      df.z_factors$ntl_mean[zix] <- mean(ntl.i[cells_mask & lit_layer == 1])
+      df.z_factors$ntl_sd[zix] <- sd(ntl.i[cells_mask & lit_layer == 1])
       
-      df.z_factors$pop_mean[zix] <- mean((pop.i[cells_mask])[pop.i[cells_mask]>0])
-      df.z_factors$pop_sd[zix] <- sd((pop.i[cells_mask])[pop.i[cells_mask]>0])
+      df.z_factors$pop_p_mean[zix] <- mean(pop.i[cells_mask & lit_layer == 1])
+      df.z_factors$pop_p_sd[zix] <- sd(pop.i[cells_mask & lit_layer == 1])
       
-      df.z_factors$house_mean[zix] <- mean((house.i[cells_mask])[house.i[cells_mask]>0])
-      df.z_factors$house_sd[zix] <- sd((house.i[cells_mask])[house.i[cells_mask]>0])
-      
+      df.z_factors$pop_n_mean[zix] <- mean(pop.i[cells_mask & lit_layer == 0])
+      df.z_factors$pop_n_sd[zix] <- sd(pop.i[cells_mask & lit_layer == 0])
     }
     
     z.ntl_layer[cells_mask] <- (ntl.i[cells_mask] - df.z_factors$ntl_mean[zix])/df.z_factors$ntl_sd[zix]
-    z.pop_layer[cells_mask] <- (pop.i[cells_mask] - df.z_factors$pop_mean[zix])/df.z_factors$pop_sd[zix]
-    z.house_layer[cells_mask] <- (house.i[cells_mask] - df.z_factors$house_mean[zix])/df.z_factors$house_sd[zix]
-    
+    z.pop_p_layer[cells_mask] <- (pop.i[cells_mask] - df.z_factors$pop_p_mean[zix])/df.z_factors$pop_p_sd[zix]
+    z.pop_n_layer[cells_mask] <- (pop.i[cells_mask] - df.z_factors$pop_n_mean[zix])/df.z_factors$pop_n_sd[zix]
   }
   
-  offset_layer <- make_raster(offset_layer)
-  lit_layer <- make_raster(lit_layer)
+  z.ntl_layer[lit_layer == 0] <- 0
+  z.pop_p_layer[lit_layer == 0] <- 0
+  z.pop_n_layer[lit_layer == 1] <- 0
+  
+  # A few pixels are not catched by the shp polygons we define them as zero
+  aux1 <- sum(!is.na(ntl.i[]) & is.na(z.ntl_layer[]))
+  aux2 <- sum(!is.na(ntl.i[]) & is.na(z.pop_p_layer[]))
+  aux3 <- sum(!is.na(ntl.i[]) & is.na(z.pop_n_layer[]))
+  if(aux1 > 0 | aux2 > 0 | aux3 > 0){
+    print(paste(iso3j, " ", aux1, aux2, aux3))
+  }
+  z.ntl_layer[!is.na(ntl.i[]) & is.na(z.ntl_layer[])] <- 0
+  z.pop_p_layer[!is.na(ntl.i[]) & is.na(z.pop_p_layer[])] <- 0
+  z.pop_n_layer[!is.na(ntl.i[]) & is.na(z.pop_n_layer[])] <- 0
+  
+  
   z.ntl_layer <- make_raster(z.ntl_layer)
-  z.pop_layer <- make_raster(z.pop_layer)
-  z.house_layer <- make_raster(z.house_layer)
+  z.pop_p_layer <- make_raster(z.pop_p_layer)
+  z.pop_n_layer <- make_raster(z.pop_n_layer)
   
-  offset_file <- paste("code_output/z_covariates/logitr_", yi, sep = "")
-  lit_file <- paste("code_output/z_covariates/lit_", yi, sep = "")
-  ntl_file <- paste("code_output/z_covariates/zntl_", yi, sep = "")
-  pop_file <- paste("code_output/z_covariates/zpop_", yi, sep = "")
-  house_file <- paste("code_output/z_covariates/zhouse_", yi, sep = "")
+  z.ntl_file <- paste("code_output/z_covariates/zpositive_ntl_", yi, sep = "")
+  pop_p_file <- paste("code_output/z_covariates/zpositive_pop_", yi, sep = "")
+  pop_n_file <- paste("code_output/z_covariates/zzero_pop_", yi, sep = "")
   
-  writeRaster(offset_layer, offset_file, format = "GTiff", overwrite = TRUE)
-  writeRaster(lit_layer, lit_file, format = "GTiff", overwrite = TRUE)
-  writeRaster(z.ntl_layer, ntl_file, format = "GTiff", overwrite = TRUE)
-  writeRaster(z.pop_layer, pop_file, format = "GTiff", overwrite = TRUE)
-  writeRaster(z.house_layer, house_file, format = "GTiff", overwrite = TRUE)
-  
-  # Save z_params
-  if(i == 10){
-    save(z_year_mean, z_year_sd, df.z_factors, file = "code_output/z_params.RData")
-  }
+  writeRaster(z.ntl_layer, z.ntl_file, format = "GTiff", overwrite = TRUE)
+  writeRaster(z.pop_p_layer, pop_p_file, format = "GTiff", overwrite = TRUE)
+  writeRaster(z.pop_n_layer, pop_n_file, format = "GTiff", overwrite = TRUE)
 } 
-

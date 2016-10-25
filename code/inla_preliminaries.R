@@ -28,9 +28,9 @@ df.test2 <- subset(df, !obfuscated)
 #afri_main <- afri_main[afri_main$ISO3 %in% isosample, ]
 #df.train <- subset(df.train, iso3 %in% isosample)
 #df.test1 <- subset(df.test1, iso3 %in% isosample)
-#df.train <- df.train[1:1000,]
-#df.test1 <- df.test1[1:100,]
-#df.test2 <- df.test2[1:100,]
+df.train <- df.train[1:1000,]
+df.test1 <- df.test1[1:100,]
+df.test2 <- df.test2[1:100,]
 
 
 

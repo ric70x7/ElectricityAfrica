@@ -86,6 +86,25 @@ for(i in seq(years)){
   df$ntl[mask] <- afr[pixels]
 }
 
+# Add std NTL data to the dataframe
+df$zpositive.ntl <- NA
+for(i in seq(years)){
+  yi <- 1999 + i
+  mask <- df$year == yi
+  zpntl_filename <- paste("code_output/z_covariates/zpositive_ntl_", yi, ".tif", sep = "") #5Km resolution
+  zppop_filename <- paste("code_output/z_covariates/zpositive_pop_", yi, ".tif", sep = "") #5Km resolution
+  zzpop_filename <- paste("code_output/z_covariates/zzero_pop_", yi, ".tif", sep = "") #5Km resolution
+  
+  zpntl <- raster(zpntl_filename)
+  zppop <- raster(zppop_filename)
+  zzpop <- raster(zzpop_filename)
+  
+  pixels <- cellFromXY(zpntl, df[mask, c("lon", "lat")])
+  df$zpositive.ntl[mask] <- zpntl[pixels]
+  df$zpositive.pop[mask] <- zppop[pixels]
+  df$zzero.pop[mask] <- zzpop[pixels]
+}
+
 # Add population data to the dataframe
 df$pop <- NA
 for(i in seq(years)){
@@ -127,6 +146,7 @@ df$country_logit_r <- log(df$country_r_mean/(1-df$country_r_mean))
      
 # Remove observations ntl > 64, those are water bodies
 df <- subset(df, df$ntl <= 64)
+#df <- subset(df, df$pop > 0)
 
 
 # Standardize covariates

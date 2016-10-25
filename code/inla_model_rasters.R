@@ -24,9 +24,10 @@ afr.locs <- xyFromCell(ntl2010, seq(ntl2010))
   
 # Covariates
 z.year <- 1:16
+r_country_logit <- list()
+dark_offset <- list()
 z.ntl <- list()
 z.pop <- list()
-r_country_logit <- list()
 zero_mask <- list()
 for(i in 1:num.layers){
   
@@ -34,40 +35,56 @@ for(i in 1:num.layers){
   
   # Files
   #offsetfilename <- paste("code_output/z_covariates/logit_zero_offset", yi, ".tif", sep = "")
-  offsetfilename <- paste("code_output/z_covariates/logit_min_offset", yi, ".tif", sep = "")
-  ntlfilename <- paste("data/ntl/Inland_water_masked_5k/ts", min(2013,yi), "w_template.tif", sep = "")
-  popfilename <- paste("code_output/Population/GPW4_", yi, ".tif", sep = "")
+  #offsetfilename <- paste("code_output/z_covariates/logit_min_offset", yi, ".tif", sep = "")
+  offsetfilename <- paste("code_output/z_covariates/logit_r_", yi, ".tif", sep = "")
+  litfilename <- paste("code_output/z_covariates/lit_", yi, ".tif", sep = "")
+  
+  #ntlfilename <- paste("data/ntl/Inland_water_masked_5k/ts", min(2013,yi), "w_template.tif", sep = "")
+  #popfilename <- paste("code_output/Population/GPW4_", yi, ".tif", sep = "")
+  ntlfilename <- paste("code_output/z_covariates/zpositive_ntl_", yi, ".tif", sep = "")
+  popfilename <- paste("code_output/z_covariates/zpositive_pop_", yi, ".tif", sep = "")
   
   # Data layers
   offraster <- raster(offsetfilename)
+  litraster <- raster(litfilename)
   ntlraster <- raster(ntlfilename)
   popraster <- raster(popfilename)
     
   ntl_mask <- !is.na(ntlraster[])
-  r_country_logit[[i]] <- offraster[ntl_mask]
-  z.ntl[[i]] <- log(1+ntlraster[ntl_mask])
-  z.pop[[i]] <- log(1+popraster[ntl_mask])
+  r_country_logit[[i]] <- offraster[ntl_mask] * litraster[ntl_mask]
+  dark_offset[[i]] <- 1 - litraster[ntl_mask]  
+  z.ntl[[i]] <- ntlraster[ntl_mask]
+  z.pop[[i]] <- popraster[ntl_mask]
 }
 
 
 # Posterior samples
 num.samples <- 500# FIXME: change to 10000
 post.samples <- inla.posterior.sample(n = num.samples, result = m_core)
+hype.samples <- inla.hyperpar.sample(n = num.samples, result = m_core)
 
 # Organize samples
 obj.names <- rownames(post.samples[[1]]$latent)
+
 beta.y.ix <- grepl("year", obj.names)
-rand.u.ix <- grepl("u.field", obj.names)
+#beta.l.ix <- grepl("predictor_offset_lit", obj.names)
+beta.d.ix <- grepl("predictor_offset_dark", obj.names)
 beta.n.ix <- grepl("ntl", obj.names)
-beta.h.ix <- grepl("pop", obj.names)
+#beta.h.ix <- grepl("pop", obj.names)
+rand.u.ix <- grepl("u.field", obj.names)
+
 beta.y.samples <- rep(NA, num.samples)
+#beta.l.samples <- rep(NA, num.samples)
+beta.d.samples <- rep(NA, num.samples)
 beta.n.samples <- rep(NA, num.samples)
-beta.h.samples <- rep(NA, num.samples)
+beta.h.samples <- hype.samples[,1]#rep(NA, num.samples)
 rand.u.samples <- matrix(NA, nrow = num.samples, ncol = length(meta_core$ix$stack$latn))
 for(i in 1:num.samples){
   beta.y.samples[i] <- post.samples[[i]]$latent[beta.y.ix]
+#  beta.l.samples[i] <- post.samples[[i]]$latent[beta.l.ix]
+  beta.d.samples[i] <- post.samples[[i]]$latent[beta.d.ix]
   beta.n.samples[i] <- post.samples[[i]]$latent[beta.n.ix]
-  beta.h.samples[i] <- post.samples[[i]]$latent[beta.h.ix]
+#  beta.h.samples[i] <- post.samples[[i]]$latent[beta.h.ix]
   rand.u.samples[i,] <- post.samples[[i]]$latent[rand.u.ix]
 }
 
@@ -80,10 +97,11 @@ A.latn <- inla.spde.make.A(mesh = mesh.s, loc = as.matrix(afr.locs[ntl_mask,]))
 boot.predictor <- function(slices, time.point){
   # latent variable
   eta <- as.matrix(A.latn %*% t(rand.u.samples[slices,]))
-  # offset
-  eta <- eta + t(matrix(rep(r_country_logit[[time.point]], ncol(eta)), nrow = ncol(eta), byrow = TRUE))
   # year 
   eta <- eta + matrix(rep(z.year[[time.point]], nrow(eta) * ncol(eta)), ncol = ncol(eta)) * beta.y.samples[slices]
+  # offsets
+  eta <- eta + t(matrix(rep(r_country_logit[[time.point]], ncol(eta)), nrow = ncol(eta), byrow = TRUE)) # * beta.l.samples[slices]
+  eta <- eta + t(matrix(rep(dark_offset[[time.point]], ncol(eta)), nrow = ncol(eta), byrow = TRUE) * beta.d.samples[slices])
   # ntl
   eta <- eta + t(matrix(rep(z.ntl[[time.point]], ncol(eta)), nrow = ncol(eta), byrow = TRUE) * beta.n.samples[slices])
   # pop

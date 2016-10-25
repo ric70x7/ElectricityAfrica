@@ -20,18 +20,16 @@ Edite October 17, 2016
     Generates file: code_output/country_annual_estimates.RData
                     code_output/vgpm_samples.RData
 
- 5) household_rasters.R   
-    Create layers of number of households (5Km) 2001-2015.
+## 5) household_rasters.R   
+##  Create layers of number of households (5Km) 2001-2015.
     Divide pixel-population by average number of household members per country.
     Generates files: code_output/Households/HHW4_year.tif
     
-## 6) z_covariates.R   
-##    Create layers of standardized covariates for the geostatistical model.
-##    Generates files: code_output/z_covariates/logit_r_year.tif
-##                     code_output/z_covariates/lit_year.tif
-##                     code_output/z_covariates/zntl_year.tif
-##                     code_output/z_covariates/zpop_year.tif
-##                     code_output/z_covariates/zhouse_year.tif
+ 6) z_covariates.R   
+    Create layers of standardized covariates for the geostatistical model.
+    Generates files: code_output/z_covariates/zpositive_ntl_year.tif
+                     code_output/z_covariates/zpositive_pop_year.tif
+                     code_output/z_covariates/zzero_pop_year.tif
     
  7) dhs_preprocess.R
     Clean DHS surveys and organize them in a data frame

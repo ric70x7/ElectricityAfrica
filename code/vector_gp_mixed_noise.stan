@@ -1,7 +1,7 @@
 // Binomial regression with GP
 // ---------------------------
 //
-// Edited: October 5, 2016
+// Edited: October 21, 2016
 
 
 data {
@@ -44,7 +44,7 @@ transformed data {
 parameters {
   
   real<lower=0> rbf_var;
-  real<lower=0> rbf_lengthscale_sq;
+  real<lower=0> rbf_lengthscale;
   real<lower=0> noise_var;
   real<lower=0, upper=1> rho[output_dim];
   vector[num_years] GPY[num_countries];
@@ -55,6 +55,11 @@ parameters {
 transformed parameters {
   
   cov_matrix[num_star] K_star;
+  real<lower=0> rbf_lengthscale_sq;
+  real<lower=0, upper=1> rho_sq[output_dim];
+
+  rbf_lengthscale_sq = pow(rbf_lengthscale,2);
+  for (i in 1:output_dim) rho_sq[i] = pow(rho[i],2);
   
   for (i in 1:num_years) {
     for (j in 1:num_years) {
@@ -66,11 +71,11 @@ transformed parameters {
       
       // Off-diagonal blocks
       for (n in 1:(output_dim-1)) {
-        K_star[i,j+n*num_years] = rho[n]*K_star[i,j];
-        K_star[i+n*num_years,j] = rho[n]*K_star[i,j];
+        K_star[i,j+n*num_years] = rho_sq[n]*K_star[i,j];
+        K_star[i+n*num_years,j] = rho_sq[n]*K_star[i,j];
       }
-      K_star[i+num_years,j+2*num_years] = rho[3]*K_star[i,j];
-      K_star[i+2*num_years,j+num_years] = rho[3]*K_star[i,j];
+      K_star[i+num_years,j+2*num_years] = rho_sq[3]*K_star[i,j];
+      K_star[i+2*num_years,j+num_years] = rho_sq[3]*K_star[i,j];
       
     }
   } 
@@ -83,7 +88,7 @@ model {
   vector[num_star] GP_star[num_countries];
   
   rbf_var ~ gamma(1, 1);
-  rbf_lengthscale_sq ~ gamma(2, 2);
+  rbf_lengthscale ~ gamma(2, 2);
   noise_var ~ gamma(1, 1);
   rho[1] ~ beta(2, 5);
   rho[2] ~ beta(2, 5);

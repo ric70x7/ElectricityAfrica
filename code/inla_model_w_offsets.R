@@ -15,10 +15,11 @@ load("code_output/country_annual_estimates.RData")
 
 # Predictor
 predictor <- y ~ -1 + 
-                  predictor_offset +
+                  offset(predictor_offset_lit) +
+                  predictor_offset_dark +
                   year +
-                  ntl +
-                  pop +
+                  ntl +#, model = "clinear", range = c(0, Inf)) +
+                  f(pop, model = "clinear", range = c(0, Inf)) +
                   f(u.field, model = afr.spde) + 
                   f(epsilon, model = "iid", hyper = list(theta = list(prior = "loggamma", param = c(1, .01))))
         
@@ -32,13 +33,13 @@ A.train <- inla.spde.make.A(mesh = mesh.s,
                            loc = as.matrix(meta$points$spatial))
 
 stack.train <- inla.stack(data = list(y = df.train$has_electricity),
-                         A = list(A.train, 1, 1, 1, 1, 1),
+                         A = list(A.train, 1, 1, 1, 1, 1, 1),
                          effects = list(u.f,
-                                        list(predictor_offset = df.train$logit_zero_offset),
-                                        #list(predictor_offset = df.train$logit_min_offset),
+                                        list(predictor_offset_lit = df.train$country_logit_r * df.train$lit),
+                                        list(predictor_offset_dark = 1 - df.train$lit),
                                         list(year = df.train$z.year),
-                                        list(ntl = df.train$ntl),
-                                        list(pop = df.train$pop),
+                                        list(ntl = df.train$zpositive.ntl),
+                                        list(pop = df.train$zpositive.pop),
                                         list(epsilon = 1:meta$num$data)),
                          tag = "train")
 
@@ -47,14 +48,15 @@ stack.train <- inla.stack(data = list(y = df.train$has_electricity),
 A.test1 <- inla.spde.make.A(mesh = mesh.s,
                            loc = as.matrix(df.test1[, c("lon", "lat")]))
 
+
 stack.test1 <- inla.stack(data = list(y = NA),
-                         A = list(A.test1, 1, 1, 1, 1, 1),
+                         A = list(A.test1, 1, 1, 1, 1, 1, 1),
                          effects = list(u.f,
-                                        list(predictor_offset = df.test1$logit_zero_offset),
-                                        #list(predictor_offset = df.test1$logit_min_offset),
+                                        list(predictor_offset_lit = df.test1$country_logit_r * df.test1$lit),
+                                        list(predictor_offset_dark = 1 - df.test1$lit),
                                         list(year = df.test1$z.year),
-                                        list(ntl = df.test1$ntl),
-                                        list(pop = df.test1$pop),
+                                        list(ntl = df.test1$zpositive.ntl),
+                                        list(pop = df.test1$zpositive.pop),
                                         list(epsilon = meta$num$data + 1:nrow(df.test1))),
                          tag = "test1")
 num.test1 <- nrow(df.test1)
@@ -65,13 +67,13 @@ A.test2 <- inla.spde.make.A(mesh = mesh.s,
                            loc = as.matrix(df.test2[, c("lon", "lat")]))
 
 stack.test2 <- inla.stack(data = list(y = NA),
-                         A = list(A.test2, 1, 1, 1, 1, 1),
+                         A = list(A.test2, 1, 1, 1, 1, 1, 1),
                          effects = list(u.f,
-                                        list(predictor_offset = df.test2$logit_zero_offset),
-                                        #list(predictor_offset = df.test2$logit_min_offset),
+                                        list(predictor_offset_lit = df.test2$country_logit_r * df.test2$lit),
+                                        list(predictor_offset_dark = 1 - df.test2$lit),
                                         list(year = df.test2$z.year),
-                                        list(ntl = df.test2$ntl),
-                                        list(pop = df.test2$pop),
+                                        list(ntl = df.test2$zpositive.ntl),
+                                        list(pop = df.test2$zpositive.pop),
                                         list(epsilon = meta$num$data + num.test1 + 1:nrow(df.test2))),
                          tag = "test2")
 num.test2 <- nrow(df.test2)

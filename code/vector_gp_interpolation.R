@@ -1,7 +1,7 @@
 # Annual estimates of household electricity access per country
 # -----------------------------------------------------------------
 #
-# Edited: October 6, 2016
+# Edited: October 20, 2016
 
 graphics.off()
 rm(list = ls())
@@ -187,7 +187,7 @@ vgpm <- stan(file="code/vector_gp_mixed_noise.stan",
                        Z = Z_,
                        MY_prior = MY_prior_,
                        MZ_prior = MZ_prior_),
-             warmup = 2500, iter = 5000, chains = 20, verbose = TRUE)
+             warmup = 2000, iter = 5000, chains = 20, verbose = TRUE)
 
 
 # Extract samples
