@@ -6,7 +6,7 @@
 # 2) other_data_w_covariates.RData
 # 3) df3_w_covariates.RData
 #
-# Edited: October 19, 2016
+# Edited: January 23, 2016
 
 rm(list = ls())
 library(raster)
@@ -17,7 +17,7 @@ library(maptools)
 load("code_output/electricity_dhs.RData")
 
 # Aggregate survey data by pixel
-filename <- paste("data/ntl/Inland_water_masked_5k/ts2010W_template.tif") #5Km resolution
+filename <- paste("data/ntl/GP2_Africa_5k/GP2_Africa_2010.tif") #5Km resolution
 afr <- raster(filename)
 survey.data.agg$pixel <- cellFromXY(afr, survey.data.agg[, c("lon", "lat")])
 
@@ -80,7 +80,7 @@ df$ntl <- NA
 for(i in seq(years)){
   yi <- 1999 + i
   mask <- df$year == yi
-  filename <- paste("data/ntl/Inland_water_masked_5k/ts", min(yi, 2013), "W_template.tif", sep = "") #5Km resolution
+  filename <- paste("data/ntl/GP2_Africa_5k/GP2_Africa_", min(yi, 2013), ".tif", sep = "") #5Km resolution
   afr <- raster(filename)
   pixels <- cellFromXY(afr, df[mask, c("lon", "lat")])
   df$ntl[mask] <- afr[pixels]
@@ -116,16 +116,16 @@ for(i in seq(years)){
   df$pop[mask] <- afr[pixels]
 }
 
-# Add households data to the dataframe
-df$house <- NA
-for(i in seq(years)){
-  yi <- 1999 + i
-  mask <- df$year == yi
-  filename <- paste("code_output/Households/HHW4_", yi, ".tif", sep = "")
-  afr <- raster(filename)
-  pixels <- cellFromXY(afr, df[mask, c("lon", "lat")])
-  df$house[mask] <- afr[pixels]
-}
+## Add households data to the dataframe
+#df$house <- NA
+#for(i in seq(years)){
+#  yi <- 1999 + i
+#  mask <- df$year == yi
+#  filename <- paste("code_output/Households/HHW4_", yi, ".tif", sep = "")
+#  afr <- raster(filename)
+#  pixels <- cellFromXY(afr, df[mask, c("lon", "lat")])
+#  df$house[mask] <- afr[pixels]
+#}
 
 # Add country stats
 df$country_r_mean <- NA
