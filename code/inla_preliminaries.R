@@ -9,8 +9,8 @@ library(raster)
 library(maptools)
 
 
-#graphics.off()
-#rm(list = ls())
+graphics.off()
+rm(list = ls())
 #load("code_output/train_and_test_data.RData")
 load("code_output/merged_data.RData")
 afri_main <- readShapePoly("data/Africa_main_country/Africa_main_country.shp")
@@ -18,8 +18,9 @@ afri_main <- readShapePoly("data/Africa_main_country/Africa_main_country.shp")
 
 # Split data
 ix <- sample(1:sum(df$obfuscated))
-df.train <- subset(df, obfuscated)[ix[1:15000],]
-df.test1 <- subset(df, obfuscated)[ix[15001:sum(df$obfuscated)],]
+half.obfuscated <- sum(df$obfuscated)/2
+df.train <- subset(df, obfuscated)[ix[1:half.obfuscated],]
+df.test1 <- subset(df, obfuscated)[ix[(1 + half.obfuscated):(2*half.obfuscated)],]
 df.test2 <- subset(df, !obfuscated)
 
 
@@ -28,9 +29,9 @@ df.test2 <- subset(df, !obfuscated)
 #afri_main <- afri_main[afri_main$ISO3 %in% isosample, ]
 #df.train <- subset(df.train, iso3 %in% isosample)
 #df.test1 <- subset(df.test1, iso3 %in% isosample)
-df.train <- df.train[1:1000,]
-df.test1 <- df.test1[1:100,]
-df.test2 <- df.test2[1:100,]
+#df.train <- df.train[1:1000,]
+#df.test1 <- df.test1[1:100,]
+#df.test2 <- df.test2[1:100,]
 
 
 
