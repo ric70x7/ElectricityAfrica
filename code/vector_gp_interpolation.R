@@ -1,7 +1,7 @@
 # Annual estimates of household electricity access per country
 # -----------------------------------------------------------------
 #
-# Edited: October 20, 2016
+# Edited: January 20, 2016
 
 graphics.off()
 rm(list = ls())
@@ -9,7 +9,7 @@ rm(list = ls())
 library(betareg)
 library(rstan)
 rstan_options(aut_write = TRUE)
-options(mc.cores = 10)
+options(mc.cores = 20)
 
 
 # Link functions function (transforms offests values 0 and 1)
@@ -31,25 +31,27 @@ cilo_inv_logit <- function(x) apply(inv_logit(x), c(2,3), FUN = quantile, na.rm 
 
 # Load data
 load("code_output/country_stats.RData")
-solkm <- read.csv("data/sol_km_w_iso3.csv")
+#solkm <- read.csv("data/sol_km_w_iso3.csv")
 
 # Create data frame that will contain the results
 annual_data <- merge(raw_country_stats[,c("iso3", "year", "r")],
-                     country_stats[,c("iso3", "year", "num_households", "num_lithouseholds")],
+                     #country_stats[,c("iso3", "year", "num_households", "num_lithouseholds")],
+                     country_stats[,c("iso3", "year", "num_litpix", "ntl_pmp")],
                      by = c("year", "iso3"))
 colnames(annual_data)[3] <- "reported_r"
 
-# Add sum of lights per km^2
-annual_data$sol_km2 <- NA
-for(iso3i in unique(annual_data$iso3)){
-  ixsl <- solkm$iso3 == iso3i
-  ixad <- annual_data$iso3 == iso3i
-  annual_data$sol_km2[ixad] <- as.numeric(solkm[ixsl,2:17])
-}
+## Add sum of lights per km^2
+#annual_data$sol_km2 <- NA
+#for(iso3i in unique(annual_data$iso3)){
+#  ixsl <- solkm$iso3 == iso3i
+#  ixad <- annual_data$iso3 == iso3i
+#  annual_data$sol_km2[ixad] <- as.numeric(solkm[ixsl,2:17])
+#}
 
 # Remove NTL related data of 2014 and 2015
 # NOTE: NTL values of these years is not available, 2013 was used
-annual_data[annual_data$year %in% c(2014,2015), c("sol_km2","num_lithouseholds")] <- NA
+#annual_data[annual_data$year %in% c(2014,2015), c("sol_km2","num_lithouseholds")] <- NA
+annual_data[annual_data$year %in% c(2014,2015), c("num_litpix","ntl_pmp")] <- NA
 
 
 # Define objects that will be passed to rstan
@@ -91,10 +93,13 @@ for(iso3i in iso3list){
     scale_param <- sd(logit(df$reported_r), na.rm = TRUE)
   }
   
-  N[ixmt,] <- df$num_households
-  Y[ixmt,] <- floor(df$num_households * df$reported_r)
-  Z1[ixmt,] <- (scale(df$sol_km2) * scale_param + offset_param)
-  Z2[ixmt,] <- (scale(df$num_lithouseholds) * scale_param + offset_param)
+  N[ixmt,] <- 1000 #df$num_households
+  #Y[ixmt,] <- floor(df$num_households * df$reported_r)
+  Y[ixmt,] <- floor(1000 * df$reported_r)
+  #Z1[ixmt,] <- (scale(df$sol_km2) * scale_param + offset_param)
+  #Z2[ixmt,] <- (scale(df$num_lithouseholds) * scale_param + offset_param)
+  Z1[ixmt,] <- (scale(df$num_litpix) * scale_param + offset_param)
+  Z2[ixmt,] <- (scale(df$ntl_pmp) * scale_param + offset_param)
   
   
   # Priors for the rate
@@ -187,7 +192,8 @@ vgpm <- stan(file="code/vector_gp_mixed_noise.stan",
                        Z = Z_,
                        MY_prior = MY_prior_,
                        MZ_prior = MZ_prior_),
-             warmup = 2000, iter = 5000, chains = 20, verbose = TRUE)
+             warmup = 2000, iter = 10000, chains = 20, verbose = TRUE)
+             #warmup = 200, iter = 1000, chains = 1, verbose = TRUE)
 
 
 # Extract samples
@@ -232,49 +238,57 @@ for(iso3i in iso3list){
 }
 
 # Save data
+save(vgpm, file = "code_output/vgpm_stan_ouput.RData")
 save(annual_data, file = "code_output/country_annual_estimates.RData")
 
 
 
-#graphics.off()
-#
-#item <- 5; mask_item <- ix_data[item, 1:num_data[item]]
-#
-#plot(X, f1_mean[item,], col = "red", ylim = c(min(z_mean[item,] - 2*z_sd[item,]),max(z_mean[item,] + 2*z_sd[item,]) ) )
-#lines(X, f1_mean[item,] + 1.96 * f1_sd[item,], col = "red", lty = 2)
-#lines(X, f1_mean[item,] - 1.96 * f1_sd[item,], col = "red", lty = 2)
-#lines(X, MY_prior[item,], col = "red")
-#points(X[mask_item], logit(Y[item,mask_item]/N[item,mask_item]), col = "red", pch = 16)
-#
-##plot(X, f2_mean, col = "blue")
-#points(X, f2_mean[item,], col = "blue")
-#lines(X, f2_mean[item,] + 1.96 * f2_sd[item,], col = "blue", lty = 2)
-#lines(X, f2_mean[item,] - 1.96 * f2_sd[item,], col = "blue", lty = 2)
-#lines(X, MZ1_prior[item,], col = "blue")
-#points(X[1:14], Z1[item,1:14], col = "blue", pch = 16)
-#
-#points(X, f3_mean[item,], col = "green")
-#lines(X, f3_mean[item,] + 1.96 * f3_sd[item,], col = "green", lty = 2)
-#lines(X, f3_mean[item,] - 1.96 * f3_sd[item,], col = "green", lty = 2)
-#lines(X, MZ2_prior[item,], col = "green")
-#points(X[1:14], Z2[item, 1:14], col = "green", pch = 16)
-#
-#
-#plot(X, r_mean[item,], col = "red", ylim = c(0,1))
-#lines(X, r_ciup[item,], col = "red", lty = 2)
-#lines(X, r_cilo[item,], col = "red", lty = 2)
-#lines(X, MR_prior[item,], col = "red")
-#points(X[mask_item], Y[item,mask_item]/N[item,mask_item], col = "red", pch = 16)
-#
-#
-#
-#hist(vgpm_samples$noise_var)
-#hist(vgpm_samples$rbf_var)
-#hist(vgpm_samples$rbf_lengthscale_sq)
-#hist(vgpm_samples$rho[,1], xlim = c(0,1))
-#hist(vgpm_samples$rho[,2], xlim = c(0,1))
-#hist(vgpm_samples$rho[,3], xlim = c(0,1))
-#
-#
-#annual_data$iso3[]
-#
+graphics.off()
+
+item <- 30; mask_item <- ix_data[item, 1:num_data[item]]
+
+plot(X, f1_mean[item,], col = "red", ylim = c(min(z_mean[item,] - 2*z_sd[item,]),max(z_mean[item,] + 2*z_sd[item,]) ) )
+lines(X, f1_mean[item,] + 1.96 * f1_sd[item,], col = "red", lty = 2)
+lines(X, f1_mean[item,] - 1.96 * f1_sd[item,], col = "red", lty = 2)
+lines(X, MY_prior[item,], col = "red")
+points(X[mask_item], logit(Y[item,mask_item]/N[item,mask_item]), col = "red", pch = 16)
+
+#plot(X, f2_mean[item,], col = "blue")
+points(X, f2_mean[item,], col = "blue")
+lines(X, f2_mean[item,] + 1.96 * f2_sd[item,], col = "blue", lty = 2)
+lines(X, f2_mean[item,] - 1.96 * f2_sd[item,], col = "blue", lty = 2)
+lines(X, MZ1_prior[item,], col = "blue")
+points(X[1:14], Z1[item,1:14], col = "blue", pch = 16)
+
+points(X, f3_mean[item,], col = "green")
+lines(X, f3_mean[item,] + 1.96 * f3_sd[item,], col = "green", lty = 2)
+lines(X, f3_mean[item,] - 1.96 * f3_sd[item,], col = "green", lty = 2)
+lines(X, MZ2_prior[item,], col = "green")
+points(X[1:14], Z2[item, 1:14], col = "green", pch = 16)
+
+plot(X, r_mean[item,], col = "red", ylim = c(0,1))
+lines(X, r_ciup[item,], col = "red", lty = 2)
+lines(X, r_cilo[item,], col = "red", lty = 2)
+lines(X, MR_prior[item,], col = "red")
+points(X[mask_item], Y[item,mask_item]/N[item,mask_item], col = "red", pch = 16)
+
+
+
+hist(vgpm_samples$noise_var)
+hist(vgpm_samples$rbf_var)
+hist(vgpm_samples$rbf_lengthscale_sq)
+hist(vgpm_samples$rho[,1], xlim = c(0,1))
+hist(vgpm_samples$rho[,2], xlim = c(0,1))
+hist(vgpm_samples$rho[,3], xlim = c(0,1))
+
+
+hist(vgpm_samples$rho[,1], xlim = c(0,1))
+
+annual_data$iso3[]
+
+
+traceplot(vgpm, pars = c("rho[1]"), nrow= 1, inc_warmup = FALSE)
+traceplot(vgpm, pars = c("rho[2]"), nrow= 1, inc_warmup = FALSE)
+traceplot(vgpm, pars = c("rho[3]"), nrow= 1, inc_warmup = FALSE)
+
+traceplot(vgpm, pars = c("rbf_var", "rbf_lengthscale"), nrow= 2, inc_warmup = FALSE)
