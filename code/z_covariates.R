@@ -1,7 +1,7 @@
 # Standardized NTL
 # -----------------------------------
 #
-# Edited October 21, 2016
+# Edited January 23, 2016
 #
 # Standardization is done on the log scale
 # Standardization parameters are computed for each country
@@ -22,7 +22,7 @@ years <- 2000:2015
 afri_main <- shapefile("data/Africa_main_country/Africa_main_country.shp")
 
 # NTL template
-ntl_x <- raster(paste("data/ntl/Inland_water_masked_5k/ts2010W_template.tif", sep = ""))
+ntl_x <- raster(paste("data/ntl/GP2_Africa_5k/GP2_Africa_2010.tif", sep = ""))
 ntl_x[ntl_x[]==128] <- NA # Value 128 is NA
 
 
@@ -46,7 +46,7 @@ df.z_factors <- data.frame(iso3 = sort(afri_countries))
 for(i in c(10, 1:9, 11:16)){
   
   yi <- years[i]
-  ntl.i <- raster(paste("data/ntl/Inland_water_masked_5k/ts", min(2013,yi), "W_template.tif", sep = ""))
+  ntl.i <- raster(paste("data/ntl/GP2_Africa_5k/GP2_Africa_", min(2013,yi), ".tif", sep = ""))
   ntl.i[ntl.i>64] <- NA
   
   lit_layer <- sapply(ntl.i[], FUN = function(x) min(1, x))
