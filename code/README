@@ -9,7 +9,7 @@ Edite October 17, 2016
     Generates file: code_output/Population/GPW4_year.tif
     
  2) country_stats.R 
-    Compute electricity access and households size per country
+    Compute electricity access (delete: and households size per country)
     Generates file: code_output/country_stats.RData
     
  3) vector_gp_mixed_noise.stan    
