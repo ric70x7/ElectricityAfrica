@@ -1,7 +1,7 @@
 # Create layers to offset logit_r
 # -------------------------------
 #
-# Edited: October 19, 2016
+# Edited: January 23, 2016
 
 rm(list = ls())
 library(raster)
@@ -13,7 +13,7 @@ years <- 2000:2015
 
 
 # Create layer of offsets
-ntl_x <- raster(paste("data/ntl/Inland_water_masked_5k/ts2010W_template.tif", sep = ""))
+ntl_x <- raster(paste("data/ntl/GP2_Africa_5k/GP2_Africa_2010.tif", sep = ""))
 ntl_x[ntl_x[]==128] <- NA # Value 128 is NA
 
 # Function to define new raster object
@@ -34,7 +34,7 @@ for(i in seq(years)){
   yi <- 1999 + i
   country_mean_layer <- rep(NA, length(ntl_x[]))
   lit_layer <- rep(NA, length(ntl_x[]))
-  ntl.i <- raster(paste("data/ntl/Inland_water_masked_5k/ts", min(2013,yi), "W_template.tif", sep = ""))
+  ntl.i <- raster(paste("data/ntl/GP2_Africa_5k/GP2_Africa_", min(2013,yi), ".tif", sep = ""))
   for(iso3j in afri_countries){ 
     shp_boundary <- afri_main[afri_main$ISO3 == iso3j,]
     raster_mask <- mask(ntl_x, shp_boundary)
@@ -70,4 +70,3 @@ for(i in seq(years)){
   writeRaster(logit_min_offset, min_file, format = "GTiff", overwrite = TRUE)
   writeRaster(logit_zero_offset, zero_file, format = "GTiff", overwrite = TRUE)
 }
-
