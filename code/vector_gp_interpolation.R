@@ -1,7 +1,7 @@
 # Annual estimates of household electricity access per country
 # -----------------------------------------------------------------
 #
-# Edited: January 20, 2016
+# Edited: January 30, 2016
 
 graphics.off()
 rm(list = ls())
@@ -36,9 +36,10 @@ load("code_output/country_stats.RData")
 # Create data frame that will contain the results
 annual_data <- merge(raw_country_stats[,c("iso3", "year", "r")],
                      #country_stats[,c("iso3", "year", "num_households", "num_lithouseholds")],
-                     country_stats[,c("iso3", "year", "num_litpix", "ntl_pmp")],
+                     country_stats[,c("iso3", "year", "num_litpix", "num_litpoppix")],
                      by = c("year", "iso3"))
 colnames(annual_data)[3] <- "reported_r"
+annual_data$pop_lit <- annual_data$num_litpoppix/annual_data$num_litpix
 
 ## Add sum of lights per km^2
 #annual_data$sol_km2 <- NA
@@ -51,7 +52,7 @@ colnames(annual_data)[3] <- "reported_r"
 # Remove NTL related data of 2014 and 2015
 # NOTE: NTL values of these years is not available, 2013 was used
 #annual_data[annual_data$year %in% c(2014,2015), c("sol_km2","num_lithouseholds")] <- NA
-annual_data[annual_data$year %in% c(2014,2015), c("num_litpix","ntl_pmp")] <- NA
+annual_data[annual_data$year %in% c(2014,2015), c("num_litpix","pop_lit")] <- NA
 
 
 # Define objects that will be passed to rstan
@@ -99,7 +100,7 @@ for(iso3i in iso3list){
   #Z1[ixmt,] <- (scale(df$sol_km2) * scale_param + offset_param)
   #Z2[ixmt,] <- (scale(df$num_lithouseholds) * scale_param + offset_param)
   Z1[ixmt,] <- (scale(df$num_litpix) * scale_param + offset_param)
-  Z2[ixmt,] <- (scale(df$ntl_pmp) * scale_param + offset_param)
+  Z2[ixmt,] <- (scale(df$pop_lit) * scale_param + offset_param)
   
   
   # Priors for the rate

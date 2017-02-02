@@ -1,7 +1,7 @@
 # Compute electricity access and households size per country
 # ----------------------------------------------------------
 #
-# Edited: January 20, 2017
+# Edited: January 30, 2017
 
 
 library(raster)
@@ -149,7 +149,8 @@ for(iso3j in afri_main$ISO3){
 
 
 #country_stats$ntl_pkh <- 1000 * country_stats$ntl/country_stats$num_households
-country_stats$ntl_pmp <- 1000000 * country_stats$ntl/country_stats$pop
+#country_stats$ntl_pmp <- 1000000 * country_stats$ntl/country_stats$pop
+#country_stats$pop_lit <- country_stats$num_litpoppix/country_stats$num_poppix
 
 
 save(raw_country_stats, country_stats, file = "code_output/country_stats.RData")
