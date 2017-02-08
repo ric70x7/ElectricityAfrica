@@ -102,3 +102,5 @@ afr.countries <- unique(survey.data.agg$iso3)
 surveys <- survey.data[survey.data$ISO3 %in% afr.countries, c("SurveyID", "Country", "ISO3", "Year")]
 surveys <- unique(surveys)
 write.csv(surveys, "code_output/surveys_in_dhs_preporcess.csv")
+
+# 73 surveys:  dim(unique(survey.data.agg[,1:3]))
