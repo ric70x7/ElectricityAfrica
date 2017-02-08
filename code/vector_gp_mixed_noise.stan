@@ -87,12 +87,17 @@ model {
   vector[num_star] M_star[num_countries];
   vector[num_star] GP_star[num_countries];
   
-  rbf_var ~ gamma(1, 1);
-  rbf_lengthscale ~ gamma(2, 2);
-  noise_var ~ gamma(1, 1);
-  rho[1] ~ beta(2, 5);
-  rho[2] ~ beta(2, 5);
-  rho[3] ~ beta(5, 2);
+  rbf_var ~ gamma(30, 100);
+  // rbf_lengthscale ~ gamma(2, 2);
+  rbf_lengthscale ~ gamma(11, 8);
+  #noise_var ~ gamma(1, 1);
+  //rho[1] ~ beta(2, 5);
+  //ho[2] ~ beta(2, 5);
+  //rho[3] ~ beta(5, 2);
+  noise_var ~ gamma(20, 1000);
+  rho[1] ~ beta(7, 7);
+  rho[2] ~ beta(7, 7);
+  rho[3] ~ beta(7, 1);
   
   for (q in 1:num_countries) {
     // Prior mean
