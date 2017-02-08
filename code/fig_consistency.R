@@ -25,17 +25,20 @@ load("code_output/raster_aggregates.RData")
 iso3list <- sort(unique(annual_data$iso3))
 
 
-num_consistent <- c(30, 33, 41)
-num_inconsistent <- c(25, 27, 40)
-#for(num in seq(iso3list)){
+#num_consistent <- c(6, 9, 20, 24, 30, 32, 33, 36, 41, 42, 45, 48)#47
+#num_inconsistent <- c(1, 5, 35, 7, 8, 11, 14, 16, 22, 18, 19, 21)
 
-annual_data$dummy1 <-"per household"
-annual_data$dummy2 <-"per population"
+num_examples <- c(1, 5, 6, 9, 18, 19, 20, 21, 24, 30, 32, 35)#47
+
+annual_data$dummy1 <-"country estimate"
+annual_data$dummy2 <-"geostatistic average"
 
 i <- 0
 plt_list <- list()
-hlocation <- c(.85, .85, .85, .25, .25, .85)
-for(num in c(num_consistent, num_inconsistent)){
+#hlocation <- c(.85, .85, .85, .25, .25, .85)
+hlocation <- c(.85, .85, .85, .85, .85, .85, .85, .85, .85, .85, .85, .85)
+#for(num in c(num_consistent, num_inconsistent)){
+for(num in num_examples){
   i <- i+1
   plt_list[[i]] <-  ggplot(subset(annual_data, iso3 == iso3list[num]), aes(x = year)) +
    geom_line(aes(y = r_mean, color = dummy1), size = 1.5) +
@@ -50,14 +53,21 @@ for(num in c(num_consistent, num_inconsistent)){
 }
 
 
-fig_caver <-ggdraw(xlim = c(0,12), ylim = c(0,8)) +
-            draw_plot(plt_list[[1]], x = 0, y = 4, width = 4, height = 3.8) +
-            draw_plot(plt_list[[2]], x = 4, y = 4, width = 4, height = 3.8) +
-            draw_plot(plt_list[[3]], x = 8, y = 4, width = 4, height = 3.8) +
-            draw_plot(plt_list[[5]], x = 0, y = 0, width = 4, height = 3.8) +
-            draw_plot(plt_list[[4]], x = 4, y = 0, width = 4, height = 3.8) +
-            draw_plot(plt_list[[6]], x = 8, y = 0, width = 4, height = 3.8) +
-            draw_plot_label(c("A", "B", "C", "D", "E", "F"),
-                            c(0, 4, 8, 0, 4, 8), c(4, 4, 4, 8, 8, 8), size = 18, color = "grey")
-save_plot("figs/fig_consistency.pdf", fig_caver, base_width = 12, base_height = 8)
+fig_caver <-ggdraw(xlim = c(0,12), ylim = c(0,16)) +
+            draw_plot(plt_list[[1]], x = 0, y = 12, width = 4, height = 3.8) +
+            draw_plot(plt_list[[2]], x = 4, y = 12, width = 4, height = 3.8) +
+            draw_plot(plt_list[[3]], x = 8, y = 12, width = 4, height = 3.8) +
+            draw_plot(plt_list[[4]], x = 0, y = 8, width = 4, height = 3.8) +
+            draw_plot(plt_list[[5]], x = 4, y = 8, width = 4, height = 3.8) +
+            draw_plot(plt_list[[6]], x = 8, y = 8, width = 4, height = 3.8) +
+            draw_plot(plt_list[[7]], x = 0, y = 4, width = 4, height = 3.8) +
+            draw_plot(plt_list[[8]], x = 4, y = 4, width = 4, height = 3.8) +
+            draw_plot(plt_list[[9]], x = 8, y = 4, width = 4, height = 3.8) +
+            draw_plot(plt_list[[10]], x = 0, y = 0, width = 4, height = 3.8) +
+            draw_plot(plt_list[[11]], x = 4, y = 0, width = 4, height = 3.8) +
+            draw_plot(plt_list[[12]], x = 8, y = 0, width = 4, height = 3.8) +
+            draw_plot_label(c("A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"),
+                            c(0, 4, 8, 0, 4, 8, 0, 4, 8, 0, 4, 8), c(16, 16, 16, 12, 12, 12, 8, 8, 8, 4, 4, 4), size = 18, color = "grey")
+fig_caver
+save_plot("figs/fig_consistency.pdf", fig_caver, base_width = 12, base_height = 16)
 

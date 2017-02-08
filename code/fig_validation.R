@@ -63,7 +63,7 @@ test1_dens <-
   ylab("density") +
   theme_hc(base_size = font_size) +
   theme(legend.position = c(.75,.85)) +
-  scale_fill_manual(values = c(myblue, myred), guide = guide_legend(title = "Actual category\n(DHS hold out)"))
+  scale_fill_manual(values = c(myblue, myred), guide = guide_legend(title = "Actual category\n(V1)"))
 
 
 dftest2 <- data.frame(observed = df.test2$r, predicted = predicted.test2.mean)
@@ -78,7 +78,7 @@ test2_dens <-
   ylab("density") +
   theme_hc(base_size = font_size) +
   theme(legend.position = c(.75,.85)) +
-  scale_fill_manual(values = c(myblue, myred), guide = guide_legend(title = "Actual category\n(MIS/AIS)"))
+  scale_fill_manual(values = c(myblue, myred), guide = guide_legend(title = "Actual category\n(V2)"))
 
 
 false_pos1 <- c()
@@ -110,8 +110,8 @@ plt_roc <-
 
 fig_validation <-
   ggdraw(xlim = c(0,12), ylim = c(0,4)) +
-  draw_plot(test2_dens, x = 0, y = 0, width = 4, height = 3.7) +
-  draw_plot(test1_dens, x = 4, y = 0, width = 4, height = 3.7) +
+  draw_plot(test1_dens, x = 0, y = 0, width = 4, height = 3.7) +
+  draw_plot(test2_dens, x = 4, y = 0, width = 4, height = 3.7) +
   draw_plot(plt_roc, x = 8, y = 0, width = 4, height = 3.7) +
   draw_plot_label(c("A", "B", "C"), c(0, 4, 8), c(4, 4, 4), size = 18, color = "grey")
   save_plot("figs/fig_validation.pdf", fig_validation, base_width = 12, base_height = 4)

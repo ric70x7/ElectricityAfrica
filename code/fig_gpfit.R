@@ -9,7 +9,7 @@ rm(list=ls())
 
 load("code_output/vgpm_samples.RData")
 load("code_output/country_stats.RData")
-solkm <- read.csv("data/sol_km_w_iso3.csv")
+#solkm <- read.csv("data/sol_km_w_iso3.csv")
 
 myblue <-"#6495ED"
 mygreen <- "#86C67C"
@@ -21,19 +21,19 @@ font_size <- 15
 ## Drivers data
 # Create data frame that will contain the results
 annual_data <- merge(raw_country_stats[,c("iso3", "year", "r")],
-                     country_stats[,c("iso3", "year", "num_households", "num_lithouseholds")],
+                     country_stats[,c("iso3", "year", "num_litpix", "pop_lit")],
                      by = c("year", "iso3"))
 colnames(annual_data)[3] <- "reported_r"
 # Add sum of lights per km^2
-annual_data$sol_km2 <- NA
-for(iso3i in unique(annual_data$iso3)){
-  ixsl <- solkm$iso3 == iso3i
-  ixad <- annual_data$iso3 == iso3i
-  annual_data$sol_km2[ixad] <- as.numeric(solkm[ixsl,2:17])
-}
+#annual_data$sol_km2 <- NA
+#for(iso3i in unique(annual_data$iso3)){
+#  ixsl <- solkm$iso3 == iso3i
+#  ixad <- annual_data$iso3 == iso3i
+#  annual_data$sol_km2[ixad] <- as.numeric(solkm[ixsl,2:17])
+#}
 # Remove NTL related data of 2014 and 2015
 # NOTE: NTL values of these years is not available, 2013 was used
-annual_data[annual_data$year %in% c(2014,2015), c("sol_km2","num_lithouseholds")] <- NA
+annual_data[annual_data$year %in% c(2014,2015), c("num_litpix", "pop_lit")] <- NA
 # Define objects that will be passed to rstan
 X <- 2000:2015
 iso3list <- paste(unique(country_stats$iso3))
@@ -71,17 +71,18 @@ for(iso3i in iso3list){
     #scale_param <- sd(logit(df$reported_r), na.rm = TRUE)
     scale_param <- sd((df$reported_r), na.rm = TRUE)
   }
-  N[ixmt,] <- df$num_households
+  #N[ixmt,] <- df$num_households
   Y[ixmt,] <- (df$reported_r)# - offset_param)/scale_param
-  Z1[ixmt,] <- scale(df$sol_km2) * scale_param + offset_param
-  Z2[ixmt,] <- scale(df$num_lithouseholds) * scale_param + offset_param
+  Z1[ixmt,] <- scale(df$num_litpix) * scale_param + offset_param
+  Z2[ixmt,] <- scale(df$pop_lit) * scale_param + offset_param
 }
 
 
 
 graphics.off()
 
-cnums<- c(40,42,44)
+#cnums<- c(40,42,44)
+cnums<- c(40,6,7)
 
 # 1
 num <- cnums[1]
@@ -94,11 +95,11 @@ df <- data.frame(year = 2000:2015,
                  W = Z2[num,],
                  dummy1 = "Mean estimates",
                  dummy2 = "Observed data",
-                 dummy3 = "NTL associated variables",
+                 dummy3 = "LP",
                  dummy4 = "95% credible intervals")
 plot1 <- ggplot(df) + 
          geom_line(aes(year, V, color = dummy3), size = 1.3, alpha = .7) +
-         geom_line(aes(year, W, color = dummy3), size = 1.3, alpha = .7) +
+         #geom_line(aes(year, W, color = dummy3), size = 1.3, alpha = .7) +
          geom_errorbar(aes(year, ymin = cilo, ymax = ciup, color = dummy4), size = 1, alpha = .7) +
          geom_line(aes(year, mean, color = dummy1), size = 1.3) +
          ylim(0,1) +
@@ -109,7 +110,7 @@ plot1 <- ggplot(df) +
                      axis.ticks.x = element_blank(),
                      #axis.text.y = element_blank(),
                      legend.position = c(.4,.20)) +
-               scale_color_manual(name=iso3list[num], values=c(myred, myblue, "grey", mygreen)) 
+               scale_color_manual(name=iso3list[num], values=c(myred, "grey", myblue, mygreen)) 
           
   
 
@@ -124,11 +125,11 @@ df <- data.frame(year = 2000:2015,
                  W = Z2[num,],
                  dummy1 = "Mean estimates",
                  dummy2 = "Observed data",
-                 dummy3 = "NTL associated variables",
+                 dummy3 = "LP",
                  dummy4 = "95% credible intervals")
 plot2 <- ggplot(df) + 
          geom_line(aes(year, V, color = dummy3), size = 1.3, alpha = .7) +
-         geom_line(aes(year, W, color = dummy3), size = 1.3, alpha = .7) +
+         #geom_line(aes(year, W, color = dummy3), size = 1.3, alpha = .7) +
          geom_errorbar(aes(year, ymin = cilo, ymax = ciup, color = dummy4), size = 1, alpha = .7) +
          geom_line(aes(year, mean, color = dummy1), size = 1.3) +
          ylim(0,1) +
@@ -139,7 +140,7 @@ plot2 <- ggplot(df) +
                      axis.ticks.x = element_blank(),
                      #axis.text.y = element_blank(),
                      legend.position = c(.4,.85)) +
-               scale_color_manual(name=iso3list[num], values=c(myred, myblue, "grey", mygreen)) 
+               scale_color_manual(name=iso3list[num], values=c(myred, "grey", myblue, mygreen)) 
   
 
 # 3
@@ -153,11 +154,11 @@ df <- data.frame(year = 2000:2015,
                  W = Z2[num,],
                  dummy1 = "Mean estimates",
                  dummy2 = "Observed data",
-                 dummy3 = "NTL associated variables",
+                 dummy3 = "LP",
                  dummy4 = "95% credible intervals")
 plot3 <- ggplot(df) + 
          geom_line(aes(year, V, color = dummy3), size = 1.3, alpha = .7) +
-         geom_line(aes(year, W, color = dummy3), size = 1.3, alpha = .7) +
+         #geom_line(aes(year, W, color = dummy3), size = 1.3, alpha = .7) +
          geom_errorbar(aes(year, ymin = cilo, ymax = ciup, color = dummy4), size = 1, alpha = .7) +
          geom_line(aes(year, mean, color = dummy1), size = 1.3) +
          ylim(0,1) +
@@ -168,7 +169,7 @@ plot3 <- ggplot(df) +
                      axis.ticks.x = element_blank(),
                      #axis.text.y = element_blank(),
                      legend.position = c(.4,.85)) +
-               scale_color_manual(name=iso3list[num], values=c(myred, myblue, "grey", mygreen)) 
+               scale_color_manual(name=iso3list[num], values=c(myred, "grey", myblue, mygreen)) 
   
 
 

@@ -100,23 +100,23 @@ years <- 2000:2015
 
 
 font_size = 15
-num <- 14
+num <- 11#14
 df1 <- data.frame(year = rep(2000:2015, 3), x = c(Y[num,], Z1[num,], Z2[num,]),
                   variable = c(rep("EA", 16), rep("LP", 16), rep("LPWP", 16)))
 num <- 36
 df2 <- data.frame(year = rep(2000:2015, 3), x = c(Y[num,], Z1[num,], Z2[num,]),
                   variable = c(rep("EA", 16), rep("LP", 16), rep("LPWP", 16)))
 
-num <- 46#46
+num <- 46
 df3 <- data.frame(year = rep(2000:2015, 3), x = c(Y[num,], Z1[num,], Z2[num,]),
                   variable = c(rep("EA", 16), rep("LP", 16), rep("LPWP", 16)))
 
-num <- 33
+num <- 14
 df4 <- data.frame(year = rep(2000:2015, 3), x = c(Y[num,], Z1[num,], Z2[num,]),
                   variable = c(rep("EA", 16), rep("LP", 16), rep("LPWP", 16)))
 
 
-names_used <- iso3list[c(14,36,46, 33)]
+names_used <- iso3list[c(11,36,46, 14)]
 
 plot1 <- ggplot(df1, aes(year, x)) +
          geom_point(aes(color = variable), size = 3) + 
@@ -178,8 +178,8 @@ graphics.off()
 
 fig_drivers <- ggdraw(xlim = c(0,12), ylim = c(0,4)) +
             draw_plot(plot1, x = 0, y = 0, width = 4, height = 3.8) +
-            draw_plot(plot4, x = 4, y = 0, width = 4, height = 3.8) +
-            draw_plot(plot3, x = 8, y = 0, width = 4, height = 3.8) +
+            draw_plot(plot3, x = 4, y = 0, width = 4, height = 3.8) +
+            draw_plot(plot4, x = 8, y = 0, width = 4, height = 3.8) +
             draw_plot_label(c("A", "B", "C"), c(0, 4, 8), c(4,4,4), size = 18, color = "grey")
 save_plot("figs/fig_drivers.pdf", fig_drivers, base_width = 12, base_height = 4)
 
@@ -188,3 +188,4 @@ plot(Z2[1,],Y[1,], pch = 16, xlim = c(-.1,1.1), ylim = c(-.1,1.1))
 for(i in 1:nrow(Y)){
   points(Z2[i,], Y[i,], pch = 16, col = i)
 }
+plot1

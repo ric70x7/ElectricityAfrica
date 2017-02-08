@@ -13,7 +13,8 @@ library(maptools)
 
 pltyear <- 2010
 
-ntl <- raster(paste("data/ntl/Inland_water_masked_5k/ts", pltyear, "W_template.tif", sep = ""))
+#ntl <- raster(paste("data/ntl/Inland_water_masked_5k/ts", pltyear, "W_template.tif", sep = ""))
+ntl <- raster(paste("data/ntl/GP2_Africa_5k/GP2_Africa_", pltyear, ".tif", sep = ""))
 pea <- raster(paste("code_output/Electricity/access_", pltyear, ".tif",  sep = ""))
 cea <- raster(paste("code_output/z_covariates/logit_r_", pltyear, ".tif", sep = ""))
 pop <- raster(paste("code_output/Population/GPW4_", pltyear, ".tif", sep = ""))

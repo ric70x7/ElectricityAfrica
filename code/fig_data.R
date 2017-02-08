@@ -146,9 +146,12 @@ wdi_map <- ggplot(afri_main.df) + aes(long, lat, group = group) +
            coord_equal()
 
 # Sample points
+afri_aux <- afri_main
+afri_aux$survey[afri_aux$survey == "DHS"] <- "Obfuscated" 
+afri_aux$survey[afri_aux$survey == "MIS"] <- "Not obfuscated" 
 pts_map <- ggplot(afri_main.df, aes(long, lat)) +
            geom_polygon(aes(group = group), colour = "grey", fill = "white") +
-           geom_point(data = df.samples, aes(lon, lat, color = survey)) +
+           geom_point(data = df.samples, aes(lon, lat, color = survey), alpha = .3) +
            scale_color_manual(values = c("#6495ED", "#EE6A50"), guide = guide_legend(title = "Survey\nlocations")) +
            theme_map(base_size = font_size) +
            coord_equal()
