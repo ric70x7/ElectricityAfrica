@@ -4,6 +4,7 @@
 # Edited: July 21, 2016
 # The locations in these surveys were not obfuscated
 # These data points will be used for testing
+# 8 surveys, Zambia: 2006, 2008, 2010, 2012; Malawi: 2006, 2008, 2010, 2012
 
 
 other.data <- read.table("data/Zam_ma_electricity.csv", header = TRUE, sep = ",", quote = "")
