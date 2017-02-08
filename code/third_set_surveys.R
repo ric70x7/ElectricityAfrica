@@ -2,6 +2,7 @@
 # ------------------------------
 #
 # Edited: September 27, 2016
+# 16 surveys
 
 
 rm(list = ls())
