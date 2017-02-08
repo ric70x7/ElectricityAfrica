@@ -193,8 +193,9 @@ vgpm <- stan(file="code/vector_gp_mixed_noise.stan",
                        Z = Z_,
                        MY_prior = MY_prior_,
                        MZ_prior = MZ_prior_),
-             warmup = 2000, iter = 10000, chains = 20, verbose = TRUE)
-             #warmup = 200, iter = 1000, chains = 1, verbose = TRUE)
+             #warmup = 2000, iter = 10000, chains = 20, verbose = TRUE)
+             #warmup = 1000, iter = 3000, chains = 20, verbose = TRUE)
+             warmup = 500, iter = 5000, chains = 20, verbose = TRUE)
 
 
 # Extract samples
@@ -285,11 +286,12 @@ hist(vgpm_samples$rho[,3], xlim = c(0,1))
 
 hist(vgpm_samples$rho[,1], xlim = c(0,1))
 
-annual_data$iso3[]
 
-
-traceplot(vgpm, pars = c("rho[1]"), nrow= 1, inc_warmup = FALSE)
-traceplot(vgpm, pars = c("rho[2]"), nrow= 1, inc_warmup = FALSE)
-traceplot(vgpm, pars = c("rho[3]"), nrow= 1, inc_warmup = FALSE)
+traceplot(vgpm, pars = c("rho[1]"), nrow= 1, inc_warmup = TRUE)
+traceplot(vgpm, pars = c("rho[2]"), nrow= 1, inc_warmup = TRUE)
+traceplot(vgpm, pars = c("rho[3]"), nrow= 1, inc_warmup = TRUE)
+traceplot(vgpm, pars = c("noise_var"), nrow= 1, inc_warmup = TRUE)
+traceplot(vgpm, pars = c("noise_var"), nrow= 1, inc_warmup = FALSE)
 
 traceplot(vgpm, pars = c("rbf_var", "rbf_lengthscale"), nrow= 2, inc_warmup = FALSE)
+
