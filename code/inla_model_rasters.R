@@ -19,7 +19,8 @@ load("code_output/country_annual_estimates.RData")
 num.layers <- 16
 
 # Whole grid
-ntl2010 <- raster(paste("data/ntl/Inland_water_masked_5k/ts2010W_template.tif", sep = ""))
+#ntl2010 <- raster(paste("data/ntl/Inland_water_masked_5k/ts2010W_template.tif", sep = ""))
+ntl2010 <- raster(paste("data/ntl/GP2_Africa_5k/GP2_Africa_2010.tif", sep = ""))
 afr.locs <- xyFromCell(ntl2010, seq(ntl2010))
   
 # Covariates
@@ -59,7 +60,7 @@ for(i in 1:num.layers){
 
 
 # Posterior samples
-num.samples <- 500# FIXME: change to 10000
+num.samples <- 1000#500# FIXME: change to 10000
 post.samples <- inla.posterior.sample(n = num.samples, result = m_core)
 hype.samples <- inla.hyperpar.sample(n = num.samples, result = m_core)
 
@@ -112,8 +113,8 @@ boot.predictor <- function(slices, time.point){
 
 
 # Definition of settings to parallelize
-num.cores <- 5 # FIXME: change to 10
-batch.size <- 100 # FIXME: change to 1000
+num.cores <- 10#5 # FIXME: change to 10
+batch.size <- 100#100 # FIXME: change to 1000
 num.slices <- num.samples/batch.size
 
 slices.list <- c()
