@@ -68,19 +68,19 @@ for(threshold in 1:1000/1000){
 plot(false_pos, true_pos, type = "l")
 
 
-threshold = .5
-matrix(100 * c(sum(df.test1$r <= .5 & predicted.test1.mean <= threshold)/nrow(df.test1),
+threshold = .25
+round(matrix(100 * c(sum(df.test1$r <= .5 & predicted.test1.mean <= threshold)/nrow(df.test1),
                sum(df.test1$r <= .5 & predicted.test1.mean > threshold)/nrow(df.test1),
                sum(df.test1$r > .5 & predicted.test1.mean <= threshold)/nrow(df.test1),
                sum(df.test1$r > .5 & predicted.test1.mean > threshold)/nrow(df.test1)),
-       nrow = 2, byrow = TRUE)
+       nrow = 2, byrow = TRUE), 2)
 
 
 threshold = .5
-matrix(100 * c(sum(df.test2$r == 0 & predicted.test2.mean <= threshold)/nrow(df.test2),
+round(matrix(100 * c(sum(df.test2$r == 0 & predicted.test2.mean <= threshold)/nrow(df.test2),
                sum(df.test2$r == 0 & predicted.test2.mean > threshold)/nrow(df.test2),
                sum(df.test2$r == 1 & predicted.test2.mean <= threshold)/nrow(df.test2),
                sum(df.test2$r == 1 & predicted.test2.mean > threshold)/nrow(df.test2)),
-       nrow = 2, byrow = TRUE)
+       nrow = 2, byrow = TRUE), 2)
 
 
