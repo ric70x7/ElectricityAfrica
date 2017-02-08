@@ -27,7 +27,9 @@ for(iso3i in iso3list){
     isopop <- mask(pop, isoshape)
     isoaccess <- mask(access, isoshape)
     ix <- annual_data$iso3 == iso3i & annual_data$year == yi
-    annual_data$agg_raster[ix] <- sum(isoaccess[!is.na(isoaccess)] * isopop[!is.na(isoaccess)])/sum(isopop[!is.na(isoaccess)])
+    #annual_data$agg_raster[ix] <- sum(isoaccess[!is.na(isoaccess)] * isopop[!is.na(isoaccess)], na.rm = TRUE)/sum(isopop[!is.na(isoaccess)], na.rm = TRUE)
+    #annual_data$agg_raster[ix] <- sum(isoaccess[!is.na(isoaccess)] * isopop[!is.na(isoaccess)])/sum(isopop[!is.na(isoaccess)])
+    annual_data$agg_raster[ix] <- sum(isoaccess[!is.na(isoaccess) & !is.na(isopop)] * isopop[!is.na(isoaccess) & !is.na(isopop)])/sum(isopop[!is.na(isoaccess) & !is.na(isopop)])
   }
 }
 
