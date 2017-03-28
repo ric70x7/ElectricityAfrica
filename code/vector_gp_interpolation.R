@@ -115,6 +115,9 @@ for(iso3i in iso3list){
     beta_pred <- predict(r_model, newdata = df)
     logit_beta <- logit(beta_pred)
     
+    #plot(df$year, df$reported_r, col = "blue", pch = 16)
+    #lines(df$year, beta_pred, col = "red")
+    
   }else{
     
     if(sum(mask_obsv) ==  2){
@@ -193,12 +196,17 @@ vgpm <- stan(file="code/vector_gp_mixed_noise.stan",
                        Z = Z_,
                        MY_prior = MY_prior_,
                        MZ_prior = MZ_prior_),
-             #warmup = 2000, iter = 10000, chains = 20, verbose = TRUE)
-             #warmup = 1000, iter = 3000, chains = 20, verbose = TRUE)
-             warmup = 500, iter = 5000, chains = 20, verbose = TRUE)
+             pars = c("rbf_var", "rbf_lengthscale", "noise_var",
+                         "GPY", "GPZ", "rho"),
+             init = 0,
+             ##warmup = 2000, iter = 10000, chains = 20, verbose = TRUE)
+             ##warmup = 1000, iter = 3000, chains = 20, verbose = TRUE)
+             warmup = 100, iter = 500, chains = 10, verbose = TRUE)
+             #warmup = 200, iter = 500, chains = 1, verbose = TRUE)
 
 
 # Extract samples
+#vgpm_samples <- extract(vgpm, permuted = FALSE, inc_warmup = TRUE, include = TRUE)
 vgpm_samples <- extract(vgpm, permuted = TRUE)
 save(vgpm_samples, file = "code_output/vgpm_samples.RData")
 
@@ -279,17 +287,30 @@ points(X[mask_item], Y[item,mask_item]/N[item,mask_item], col = "red", pch = 16)
 hist(vgpm_samples$noise_var)
 hist(vgpm_samples$rbf_var)
 hist(vgpm_samples$rbf_lengthscale_sq)
-hist(vgpm_samples$rho[,1], xlim = c(0,1))
-hist(vgpm_samples$rho[,2], xlim = c(0,1))
-hist(vgpm_samples$rho[,3], xlim = c(0,1))
+hist(vgpm_samples$rho[,1], xlim = c(-1,1))
+hist(vgpm_samples$rho[,2], xlim = c(-1,1))
+hist(vgpm_samples$rho[,3], xlim = c(-1,1))
 
 
-hist(vgpm_samples$rho[,1], xlim = c(0,1))
 
+hist(vgpm_samples$rho[,1])
+hist(vgpm_samples$rho[,2])
+hist(vgpm_samples$rho[,3])
+
+plot(vgpm_samples$rho[,1], type = "l")
+plot(vgpm_samples$rho[,2], type = "l")
+plot(vgpm_samples$rho[,3], type = "l")
+
+plot(vgpm_samples$rbf_var, type = "l")
+plot(vgpm_samples$rbf_lengthscale, type = "l")
+plot(vgpm_samples$noise_var, type = "l")
+
+head(vgpm_samples)
+plot(vgpm_samples)
 
 traceplot(vgpm, pars = c("rho[1]"), nrow= 1, inc_warmup = TRUE)
-traceplot(vgpm, pars = c("rho[2]"), nrow= 1, inc_warmup = TRUE)
-traceplot(vgpm, pars = c("rho[3]"), nrow= 1, inc_warmup = TRUE)
+traceplot(vgpm, pars = c("W[2]"), nrow= 1, inc_warmup = TRUE)
+traceplot(vgpm, pars = c("W[3]"), nrow= 1, inc_warmup = TRUE)
 traceplot(vgpm, pars = c("noise_var"), nrow= 1, inc_warmup = TRUE)
 traceplot(vgpm, pars = c("noise_var"), nrow= 1, inc_warmup = FALSE)
 

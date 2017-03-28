@@ -25,8 +25,8 @@ afr.locs <- xyFromCell(ntl2010, seq(ntl2010))
   
 # Covariates
 z.year <- 1:16
-r_country_logit <- list()
-dark_offset <- list()
+lit <- list()
+gpf <- list()
 z.ntl <- list()
 z.pop <- list()
 zero_mask <- list()
@@ -37,55 +37,58 @@ for(i in 1:num.layers){
   # Files
   #offsetfilename <- paste("code_output/z_covariates/logit_zero_offset", yi, ".tif", sep = "")
   #offsetfilename <- paste("code_output/z_covariates/logit_min_offset", yi, ".tif", sep = "")
-  offsetfilename <- paste("code_output/z_covariates/logit_r_", yi, ".tif", sep = "")
+  gpffilename <- paste("code_output/z_covariates/logit_r_", yi, ".tif", sep = "")
   litfilename <- paste("code_output/z_covariates/lit_", yi, ".tif", sep = "")
   
   #ntlfilename <- paste("data/ntl/Inland_water_masked_5k/ts", min(2013,yi), "w_template.tif", sep = "")
   #popfilename <- paste("code_output/Population/GPW4_", yi, ".tif", sep = "")
-  ntlfilename <- paste("code_output/z_covariates/zpositive_ntl_", yi, ".tif", sep = "")
-  popfilename <- paste("code_output/z_covariates/zpositive_pop_", yi, ".tif", sep = "")
+  ntlfilename <- paste("code_output/z_covariates/z_ntl_", yi, ".tif", sep = "")
+  popfilename <- paste("code_output/z_covariates/z_pop_", yi, ".tif", sep = "")
   
   # Data layers
-  offraster <- raster(offsetfilename)
+  gpfraster <- raster(gpffilename)
   litraster <- raster(litfilename)
   ntlraster <- raster(ntlfilename)
   popraster <- raster(popfilename)
     
   ntl_mask <- !is.na(ntlraster[])
-  r_country_logit[[i]] <- offraster[ntl_mask] * litraster[ntl_mask]
-  dark_offset[[i]] <- 1 - litraster[ntl_mask]  
+  gpf[[i]] <- gpfraster[ntl_mask]
+  lit[[i]] <- litraster[ntl_mask]  
   z.ntl[[i]] <- ntlraster[ntl_mask]
   z.pop[[i]] <- popraster[ntl_mask]
 }
 
 
 # Posterior samples
-num.samples <- 1000#500# FIXME: change to 10000
+num.samples <- 1000  #500# FIXME: change to 10000
 post.samples <- inla.posterior.sample(n = num.samples, result = m_core)
-hype.samples <- inla.hyperpar.sample(n = num.samples, result = m_core)
+#hype.samples <- inla.hyperpar.sample(n = num.samples, result = m_core)
 
 # Organize samples
 obj.names <- rownames(post.samples[[1]]$latent)
 
 beta.y.ix <- grepl("year", obj.names)
 #beta.l.ix <- grepl("predictor_offset_lit", obj.names)
-beta.d.ix <- grepl("predictor_offset_dark", obj.names)
+beta.f.ix <- grepl("country_latent", obj.names)
 beta.n.ix <- grepl("ntl", obj.names)
-#beta.h.ix <- grepl("pop", obj.names)
+beta.h.ix <- grepl("pop", obj.names)
 rand.u.ix <- grepl("u.field", obj.names)
 
 beta.y.samples <- rep(NA, num.samples)
 #beta.l.samples <- rep(NA, num.samples)
-beta.d.samples <- rep(NA, num.samples)
+beta.f.samples <- rep(NA, num.samples)
 beta.n.samples <- rep(NA, num.samples)
-beta.h.samples <- hype.samples[,1]#rep(NA, num.samples)
+
+#beta.h.samples <- hype.samples[,1]#rep(NA, num.samples)
+beta.h.samples <- rep(NA, num.samples)
+
 rand.u.samples <- matrix(NA, nrow = num.samples, ncol = length(meta_core$ix$stack$latn))
 for(i in 1:num.samples){
   beta.y.samples[i] <- post.samples[[i]]$latent[beta.y.ix]
 #  beta.l.samples[i] <- post.samples[[i]]$latent[beta.l.ix]
-  beta.d.samples[i] <- post.samples[[i]]$latent[beta.d.ix]
+  beta.f.samples[i] <- post.samples[[i]]$latent[beta.f.ix]
   beta.n.samples[i] <- post.samples[[i]]$latent[beta.n.ix]
-#  beta.h.samples[i] <- post.samples[[i]]$latent[beta.h.ix]
+  beta.h.samples[i] <- post.samples[[i]]$latent[beta.h.ix] #If pop is passed as f(pop) use hype.samples
   rand.u.samples[i,] <- post.samples[[i]]$latent[rand.u.ix]
 }
 
@@ -101,8 +104,9 @@ boot.predictor <- function(slices, time.point){
   # year 
   eta <- eta + matrix(rep(z.year[[time.point]], nrow(eta) * ncol(eta)), ncol = ncol(eta)) * beta.y.samples[slices]
   # offsets
-  eta <- eta + t(matrix(rep(r_country_logit[[time.point]], ncol(eta)), nrow = ncol(eta), byrow = TRUE)) # * beta.l.samples[slices]
-  eta <- eta + t(matrix(rep(dark_offset[[time.point]], ncol(eta)), nrow = ncol(eta), byrow = TRUE) * beta.d.samples[slices])
+  #eta <- eta + t(matrix(rep(lit[[time.point]], ncol(eta)), nrow = ncol(eta), byrow = TRUE)) * beta.l.samples[slices]
+#  eta <- eta + t(matrix(rep(lit[[time.point]], ncol(eta)), nrow = ncol(eta), byrow = TRUE) * beta.l.samples[slices])
+  eta <- eta + t(matrix(rep(gpf[[time.point]], ncol(eta)), nrow = ncol(eta), byrow = TRUE) * beta.f.samples[slices])
   # ntl
   eta <- eta + t(matrix(rep(z.ntl[[time.point]], ncol(eta)), nrow = ncol(eta), byrow = TRUE) * beta.n.samples[slices])
   # pop
@@ -113,8 +117,8 @@ boot.predictor <- function(slices, time.point){
 
 
 # Definition of settings to parallelize
-num.cores <- 10#5 # FIXME: change to 10
-batch.size <- 100#100 # FIXME: change to 1000
+num.cores <- 10 # FIXME: change to 10
+batch.size <- 100 # FIXME: change to 1000
 num.slices <- num.samples/batch.size
 
 slices.list <- c()
@@ -155,8 +159,13 @@ for(i in 1:16){
                     ymn = ntlraster@extent@ymin,
                     ymx = ntlraster@extent@ymax,
                     crs = ntlraster@crs)
+  
+  #plot(eaccess)
+  #points(df.train$lon, df.train$lat, cex = .2, col = "red")
+  
   pltyear <- 1999 + i
   filename <- paste("code_output/Electricity/access_", pltyear, sep = "")
   writeRaster(eaccess, filename, format = "GTiff", overwrite = TRUE)
 }
+
 

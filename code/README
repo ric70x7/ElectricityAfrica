@@ -12,13 +12,12 @@ Edite October 17, 2016
     Compute electricity access (delete: and households size per country)
     Generates file: code_output/country_stats.RData
     
- 3) vector_gp_mixed_noise.stan    
-    Multiple output GP with mixed Binomial and Gaussian likelihoods
+ 3) beta_regression.stan#vector_gp_mixed_noise.stan    
+    Beta regression with GP #Multiple output GP with mixed Binomial and Gaussian likelihoods
  
- 4) vector_gp_interpolation.R    
-    Calls vector_gp_mixed_noise.stan and generates samples form the process
-    Generates file: code_output/country_annual_estimates.RData
-                    code_output/vgpm_samples.RData
+ 4) country_estimates_gp #vector_gp_interpolation.R    
+    Calls beta_regression.stan #Calls vector_gp_mixed_noise.stan and generates samples form the process
+    Generates file: code_output/country_annual_estimates.RData # code_output/vgpm_samples.RData
 
 ## 5) household_rasters.R   
 ##  Create layers of number of households (5Km) 2001-2015.
@@ -31,13 +30,17 @@ Edite October 17, 2016
                      code_output/z_covariates/zpositive_pop_year.tif
                      code_output/z_covariates/zzero_pop_year.tif
     
- 7) dhs_preprocess.R
+ 7) logit_r_offsets    
+    Create rasters of linear predictor offsets
+    
+    
+ 8) dhs_preprocess.R
     Clean DHS surveys and organize them in a data frame
     
- 8) additional_surveys_preprocess.R
+ 9) additional_surveys_preprocess.R
     Put surveys, appart form DHS, in a data frame
     
- 9) third_set_surveys.R
+10) third_set_surveys.R
     Put third set of surveys in a data frame
     
 #10) dhs_w_covariates.R
@@ -49,16 +52,13 @@ Edite October 17, 2016
 #12) set3_w_covariates.R
 #    Add covariates to set3
     
-13) combine_datasets.R
+11) combine_datasets.R
     Merge DHS surveys and set 3
     
-..) logit_r_offsets    
-    Create rasters of linear predictor offsets
-    
-14) inla_preliminaries.R
+12) inla_preliminaries.R
     Define mesh and data indices
   
-15) inla_model_w_offsets.R
+13) inla_model_w_offsets.R
     Code for running INLA
     
 16) inla_model_validation.R

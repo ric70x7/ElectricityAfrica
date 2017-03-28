@@ -1,6 +1,6 @@
 # Figures: Data per country/year/survey
 #
-# Edited October 13 2016
+# Edited March 8 2017
 
 
 require("rgdal") # requires sp, will use proj.4 if installed
@@ -149,9 +149,10 @@ wdi_map <- ggplot(afri_main.df) + aes(long, lat, group = group) +
 afri_aux <- afri_main
 afri_aux$survey[afri_aux$survey == "DHS"] <- "Obfuscated" 
 afri_aux$survey[afri_aux$survey == "MIS"] <- "Not obfuscated" 
+sample_vec <- runif(nrow(df.samples), 0, 1)  < .1
 pts_map <- ggplot(afri_main.df, aes(long, lat)) +
            geom_polygon(aes(group = group), colour = "grey", fill = "white") +
-           geom_point(data = df.samples, aes(lon, lat, color = survey), alpha = .3) +
+           geom_point(data = subset(df.samples, sample_vec), aes(lon, lat, color = survey), alpha = .15, size = 1) +
            scale_color_manual(values = c("#6495ED", "#EE6A50"), guide = guide_legend(title = "Survey\nlocations")) +
            theme_map(base_size = font_size) +
            coord_equal()

@@ -1,6 +1,6 @@
 # Figures: Trends comparison y, v, w
 #
-# Edited October 13 2016
+# Edited March 8 2017
 
 library(ggplot2)
 library(cowplot)
@@ -124,27 +124,25 @@ plot1 <- ggplot(df1, aes(year, x)) +
          geom_line(data = subset(df1, variable == "LP" & !is.na(x)), aes(year,x), color = "#6495ED", size = 1) +
          geom_line(data = subset(df1, variable == "LPWP" & !is.na(x)), aes(year,x), color = "#86C67C", size = 1) +
          scale_color_manual(values = c("#EE6A50", "#6495ED", "#86C67C"), guide = guide_legend(title = names_used[1])) +
-            theme_hc(base_size = font_size) +
-            theme(axis.title.y = element_blank(),
+         ylab("Electricity access") + 
+            theme(#axis.title.y = element_blank(),
                   axis.title.x = element_blank(),
                   axis.ticks.x = element_blank(),
-                  axis.text.y = element_blank(),
-                  axis.text.x = element_text(angle = 90, hjust = 1))
+                  axis.text.x = element_text(angle = 90, hjust = 1), 
+                  legend.position = c(.15,.85)) 
 
-
-  
 plot2 <- ggplot(df2, aes(year, x)) +
          geom_point(aes(color = variable), size = 3) + 
          geom_line(data = subset(df2, variable == "EA" & !is.na(x)), aes(year,x), color = "#EE6A50", size = 1, linetype =2) +
          geom_line(data = subset(df2, variable == "LP" & !is.na(x)), aes(year,x), color = "#6495ED", size = 1) +
          geom_line(data = subset(df2, variable == "LPWP" & !is.na(x)), aes(year,x), color = "#86C67C", size = 1) +
          scale_color_manual(values = c("#EE6A50", "#6495ED", "#86C67C"), guide = guide_legend(title = names_used[2])) +
-            theme_hc(base_size = font_size) +
-            theme(axis.title.y = element_blank(),
+         ylab("Electricity access") + 
+            theme(#axis.title.y = element_blank(),
                   axis.title.x = element_blank(),
                   axis.ticks.x = element_blank(),
-                  axis.text.y = element_blank(),
-                  axis.text.x = element_text(angle = 90, hjust = 1))
+                  axis.text.x = element_text(angle = 90, hjust = 1), 
+                  legend.position = c(.15,.85)) 
   
 plot3 <- ggplot(df3, aes(year, x)) +
          geom_point(aes(color = variable), size = 3) + 
@@ -152,12 +150,12 @@ plot3 <- ggplot(df3, aes(year, x)) +
          geom_line(data = subset(df3, variable == "LP" & !is.na(x)), aes(year,x), color = "#6495ED", size = 1) +
          geom_line(data = subset(df3, variable == "LPWP" & !is.na(x)), aes(year,x), color = "#86C67C", size = 1) +
          scale_color_manual(values = c("#EE6A50", "#6495ED", "#86C67C"), guide = guide_legend(title = names_used[3])) +
-            theme_hc(base_size = font_size) +
-            theme(axis.title.y = element_blank(),
+         ylab("Electricity access") + 
+            theme(#axis.title.y = element_blank(),
                   axis.title.x = element_blank(),
                   axis.ticks.x = element_blank(),
-                  axis.text.y = element_blank(),
-                  axis.text.x = element_text(angle = 90, hjust = 1))
+                  axis.text.x = element_text(angle = 90, hjust = 1), 
+                  legend.position = c(.15,.85)) 
   
 plot4 <- ggplot(df4, aes(year, x)) +
          geom_point(aes(color = variable), size = 3) + 
@@ -165,12 +163,12 @@ plot4 <- ggplot(df4, aes(year, x)) +
          geom_line(data = subset(df4, variable == "LP" & !is.na(x)), aes(year,x), color = "#6495ED", size = 1) +
          geom_line(data = subset(df4, variable == "LPWP" & !is.na(x)), aes(year,x), color = "#86C67C", size = 1) +
          scale_color_manual(values = c("#EE6A50", "#6495ED", "#86C67C"), guide = guide_legend(title = names_used[4])) +
-            theme_hc(base_size = font_size) +
-            theme(axis.title.y = element_blank(),
+         ylab("Electricity access") + 
+            theme(#axis.title.y = element_blank(),
                   axis.title.x = element_blank(),
                   axis.ticks.x = element_blank(),
-                  axis.text.y = element_blank(),
-                  axis.text.x = element_text(angle = 90, hjust = 1))
+                  axis.text.x = element_text(angle = 90, hjust = 1), 
+                  legend.position = c(.15,.85)) 
   
   
 
@@ -184,8 +182,8 @@ fig_drivers <- ggdraw(xlim = c(0,12), ylim = c(0,4)) +
 save_plot("figs/fig_drivers.pdf", fig_drivers, base_width = 12, base_height = 4)
 
 
-plot(Z2[1,],Y[1,], pch = 16, xlim = c(-.1,1.1), ylim = c(-.1,1.1))
-for(i in 1:nrow(Y)){
-  points(Z2[i,], Y[i,], pch = 16, col = i)
-}
-plot1
+#plot(Z2[1,],Y[1,], pch = 16, xlim = c(-.1,1.1), ylim = c(-.1,1.1))
+#for(i in 1:nrow(Y)){
+#  points(Z2[i,], Y[i,], pch = 16, col = i)
+#}
+#plot1

@@ -1,4 +1,4 @@
-# Geostatistical model
+# Geostatistic model
 # --------------------
 #
 # Edited: October 19, 2016
@@ -15,13 +15,15 @@ load("code_output/country_annual_estimates.RData")
 
 # Predictor
 predictor <- y ~ -1 + 
-                  offset(predictor_offset_lit) +
-                  predictor_offset_dark +
+                  #predictor_offset_lit +
+                  country_latent +
                   year +
                   ntl +#, model = "clinear", range = c(0, Inf)) +
-                  f(pop, model = "clinear", range = c(0, Inf)) +
+                  pop + #f(pop, model = "clinear", range = c(0, Inf)) +
                   f(u.field, model = afr.spde) + 
                   f(epsilon, model = "iid", hyper = list(theta = list(prior = "loggamma", param = c(1, .01))))
+
+
         
 
 # Index of spatial points in the training set
@@ -33,13 +35,13 @@ A.train <- inla.spde.make.A(mesh = mesh.s,
                            loc = as.matrix(meta$points$spatial))
 
 stack.train <- inla.stack(data = list(y = df.train$has_electricity),
-                         A = list(A.train, 1, 1, 1, 1, 1, 1),
+                         A = list(A.train, 1, 1, 1, 1, 1),
                          effects = list(u.f,
-                                        list(predictor_offset_lit = df.train$country_logit_r * df.train$lit),
-                                        list(predictor_offset_dark = 1 - df.train$lit),
+                                        list(country_latent = df.train$country_f_mean),
+                                        #list(predictor_offset_lit = df.train$lit),
                                         list(year = df.train$z.year),
-                                        list(ntl = df.train$zpositive.ntl),
-                                        list(pop = df.train$zpositive.pop),
+                                        list(ntl = df.train$z.ntl),
+                                        list(pop = df.train$z.pop),
                                         list(epsilon = 1:meta$num$data)),
                          tag = "train")
 
@@ -50,13 +52,13 @@ A.test1 <- inla.spde.make.A(mesh = mesh.s,
 
 
 stack.test1 <- inla.stack(data = list(y = NA),
-                         A = list(A.test1, 1, 1, 1, 1, 1, 1),
+                         A = list(A.test1, 1, 1, 1, 1, 1),
                          effects = list(u.f,
-                                        list(predictor_offset_lit = df.test1$country_logit_r * df.test1$lit),
-                                        list(predictor_offset_dark = 1 - df.test1$lit),
+                                        list(country_latent = df.test1$country_f_mean),
+                                        #list(predictor_offset_lit = df.test1$lit),
                                         list(year = df.test1$z.year),
-                                        list(ntl = df.test1$zpositive.ntl),
-                                        list(pop = df.test1$zpositive.pop),
+                                        list(ntl = df.test1$z.ntl),
+                                        list(pop = df.test1$z.pop),
                                         list(epsilon = meta$num$data + 1:nrow(df.test1))),
                          tag = "test1")
 num.test1 <- nrow(df.test1)
@@ -67,13 +69,13 @@ A.test2 <- inla.spde.make.A(mesh = mesh.s,
                            loc = as.matrix(df.test2[, c("lon", "lat")]))
 
 stack.test2 <- inla.stack(data = list(y = NA),
-                         A = list(A.test2, 1, 1, 1, 1, 1, 1),
+                         A = list(A.test2, 1, 1, 1, 1, 1),
                          effects = list(u.f,
-                                        list(predictor_offset_lit = df.test2$country_logit_r * df.test2$lit),
-                                        list(predictor_offset_dark = 1 - df.test2$lit),
+                                        list(country_latent = df.test2$country_f_mean),
+                                        #list(predictor_offset_lit = df.test2$lit),
                                         list(year = df.test2$z.year),
-                                        list(ntl = df.test2$zpositive.ntl),
-                                        list(pop = df.test2$zpositive.pop),
+                                        list(ntl = df.test2$z.ntl),
+                                        list(pop = df.test2$z.pop),
                                         list(epsilon = meta$num$data + num.test1 + 1:nrow(df.test2))),
                          tag = "test2")
 num.test2 <- nrow(df.test2)
@@ -85,6 +87,7 @@ num.latn <- nrow(stack.latn$A)
 
 # Join stacks
 stack.all <- do.call(inla.stack, list(stack.train, stack.test1, stack.test2, stack.latn))
+#stack.all <- do.call(inla.stack, list(stack.train, stack.test1, stack.test2))
 
 
 # Indices to recover data
@@ -99,6 +102,7 @@ m <- inla(predictor,
           data = inla.stack.data(stack.all),
           family = "binomial",
           Ntrials = c(df.train$total, rep(1, num.test1), rep(1, num.test2), rep(1, num.latn)),
+          #Ntrials = c(df.train$total, rep(1, num.test1), rep(1, num.test2)),
           control.predictor = list(A = inla.stack.A(stack.all),
                                    compute = TRUE),
           control.compute = list(dic = TRUE, config = TRUE))

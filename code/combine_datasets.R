@@ -86,25 +86,6 @@ for(i in seq(years)){
   df$ntl[mask] <- afr[pixels]
 }
 
-# Add std NTL data to the dataframe
-df$zpositive.ntl <- NA
-for(i in seq(years)){
-  yi <- 1999 + i
-  mask <- df$year == yi
-  zpntl_filename <- paste("code_output/z_covariates/zpositive_ntl_", yi, ".tif", sep = "") #5Km resolution
-  zppop_filename <- paste("code_output/z_covariates/zpositive_pop_", yi, ".tif", sep = "") #5Km resolution
-  zzpop_filename <- paste("code_output/z_covariates/zzero_pop_", yi, ".tif", sep = "") #5Km resolution
-  
-  zpntl <- raster(zpntl_filename)
-  zppop <- raster(zppop_filename)
-  zzpop <- raster(zzpop_filename)
-  
-  pixels <- cellFromXY(zpntl, df[mask, c("lon", "lat")])
-  df$zpositive.ntl[mask] <- zpntl[pixels]
-  df$zpositive.pop[mask] <- zppop[pixels]
-  df$zzero.pop[mask] <- zzpop[pixels]
-}
-
 # Add population data to the dataframe
 df$pop <- NA
 for(i in seq(years)){
@@ -115,6 +96,29 @@ for(i in seq(years)){
   pixels <- cellFromXY(afr, df[mask, c("lon", "lat")])
   df$pop[mask] <- afr[pixels]
 }
+
+# Add std covariates to the dataframe
+#df$zpositive.ntl <- NA
+for(i in seq(years)){
+  yi <- 1999 + i
+  mask <- df$year == yi
+  lit_filename <- paste("code_output/z_covariates/lit_", yi, ".tif", sep = "") #5Km resolution
+  zpntl_filename <- paste("code_output/z_covariates/z_ntl_", yi, ".tif", sep = "") #5Km resolution
+  zppop_filename <- paste("code_output/z_covariates/z_pop_", yi, ".tif", sep = "") #5Km resolution
+  #zzpop_filename <- paste("code_output/z_covariates/zzero_pop_", yi, ".tif", sep = "") #5Km resolution
+  
+  lit <- raster(lit_filename)
+  zpntl <- raster(zpntl_filename)
+  zppop <- raster(zppop_filename)
+  #zzpop <- raster(zzpop_filename)
+  
+  pixels <- cellFromXY(zpntl, df[mask, c("lon", "lat")])
+  df$lit[mask] <- lit[pixels]
+  df$z.ntl[mask] <- zpntl[pixels]
+  df$z.pop[mask] <- zppop[pixels]
+  #df$zzero.pop[mask] <- zzpop[pixels]
+}
+
 
 ## Add households data to the dataframe
 #df$house <- NA
@@ -129,8 +133,8 @@ for(i in seq(years)){
 
 # Add country stats
 df$country_r_mean <- NA
-df$country_r_low <- NA
-df$country_r_upp <- NA
+df$country_r_lbou <- NA
+df$country_r_ubou <- NA
 df <- subset(df, iso3 != "COM") # This island is not part of our output
 for(iso3j in unique(df$iso3)){
   years_j <- unique(subset(df, iso3 == iso3j)$year)
@@ -138,11 +142,14 @@ for(iso3j in unique(df$iso3)){
     csix <- annual_data$year == yj & annual_data$iso3 == iso3j
     dfix <- df$year == yj & df$iso3 == iso3j
     df$country_r_mean[dfix] <- annual_data$r_mean[csix]
-    df$country_r_low[dfix] <- annual_data$r_cilo[csix]
-    df$country_r_upp[dfix] <- annual_data$r_ciup[csix]
+    df$country_r_lbou[dfix] <- annual_data$r_lbou[csix]
+    df$country_r_ubou[dfix] <- annual_data$r_ubou[csix]
+    #df$country_f_mean[dfix] <- annual_data$f_mean[csix]
   }
 }
-df$country_logit_r <- log(df$country_r_mean/(1-df$country_r_mean))
+df$country_f_mean <- df$country_r_mean
+df$country_f_mean[df$ntl == 0] <- 1e-4
+df$country_f_mean <- log(df$country_f_mean/(1-df$country_f_mean))
      
 # Remove observations ntl > 64, those are water bodies
 df <- subset(df, df$ntl <= 64)
@@ -151,37 +158,37 @@ df <- subset(df, df$ntl <= 64)
 
 # Standardize covariates
 df$z.year <- df$year - 1999
-df$z.ntl <-  log(1+ df$ntl)
-df$z.pop <-  log(1+ df$pop)
-df$lit <- 0
-df$lit[df$ntl>0] <- 1
-
-df$annual_r_min <- NA
-for(i in seq(years)){
-  yi <- 1999 + i
-  min_pi <- min(annual_data$r_mean[annual_data$year == yi])
-  df$annual_r_min[df$year == yi] <- log(min_pi/(1-min_pi))
-}
-
-zero_pi <- mean(df$r[df$obfuscated & df$ntl == 0], na.rm = TRUE)
-df$zero_r_mean <- log(zero_pi/(1-zero_pi))
+#df$z.ntl <-  log(1+ df$ntl)
+#df$z.pop <-  log(1+ df$pop)
+#df$lit <- 0
+#df$lit[df$ntl>0] <- 1
+#
+#df$annual_r_min <- NA
+#for(i in seq(years)){
+#  yi <- 1999 + i
+#  min_pi <- min(annual_data$r_mean[annual_data$year == yi])
+#  df$annual_r_min[df$year == yi] <- log(min_pi/(1-min_pi))
+#}
+#
+#zero_pi <- mean(df$r[df$obfuscated & df$ntl == 0], na.rm = TRUE)
+#df$zero_r_mean <- log(zero_pi/(1-zero_pi))
 
 
 # Add offset data to df
-df$pop <- NA
-for(i in seq(years)){
-  yi <- 1999 + i
-  mask <- df$year == yi
-  filename <- paste("code_output/Population/GPW4_", yi, ".tif", sep = "") #5Km resolution
-  afr <- raster(filename)
-  pixels <- cellFromXY(afr, df[mask, c("lon", "lat")])
-  df$pop[mask] <- afr[pixels]
-}
+#df$pop <- NA
+#for(i in seq(years)){
+#  yi <- 1999 + i
+#  mask <- df$year == yi
+#  filename <- paste("code_output/Population/GPW4_", yi, ".tif", sep = "") #5Km resolution
+#  afr <- raster(filename)
+#  pixels <- cellFromXY(afr, df[mask, c("lon", "lat")])
+#  df$pop[mask] <- afr[pixels]
+#}
 
-df$logit_min_offset <- df$country_logit_r
-df$logit_min_offset[df$ntl == 0] <- df$annual_r_min[df$ntl == 0]
-
-df$logit_zero_offset <- df$country_logit_r
-df$logit_zero_offset[df$ntl == 0] <- df$zero_r_mean[df$ntl == 0]
+#df$logit_min_offset <- df$country_logit_r
+#df$logit_min_offset[df$ntl == 0] <- df$annual_r_min[df$ntl == 0]
+#
+#df$logit_zero_offset <- df$country_logit_r
+#df$logit_zero_offset[df$ntl == 0] <- df$zero_r_mean[df$ntl == 0]
 
 save(df, file = "code_output/merged_data.RData")

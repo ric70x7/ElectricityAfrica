@@ -16,7 +16,7 @@ pltyear <- 2010
 #ntl <- raster(paste("data/ntl/Inland_water_masked_5k/ts", pltyear, "W_template.tif", sep = ""))
 ntl <- raster(paste("data/ntl/GP2_Africa_5k/GP2_Africa_", pltyear, ".tif", sep = ""))
 pea <- raster(paste("code_output/Electricity/access_", pltyear, ".tif",  sep = ""))
-cea <- raster(paste("code_output/z_covariates/logit_r_", pltyear, ".tif", sep = ""))
+cea <- raster(paste("code_output/z_covariates/f_", pltyear, ".tif", sep = ""))
 pop <- raster(paste("code_output/Population/GPW4_", pltyear, ".tif", sep = ""))
 
 
@@ -24,12 +24,12 @@ ntl[ntl[]==128] <- NA
 ntl_xy <- xyFromCell(ntl, seq(ntl[])[!is.na(ntl[])])
 
 pea_xy <- xyFromCell(ntl, seq(pea[])[!is.na(pea[])])
-cea_xy <- xyFromCell(ntl, seq(pea[])[!is.na(cea[])])
+cea_xy <- xyFromCell(ntl, seq(cea[])[!is.na(cea[])])
 pop_xy <- xyFromCell(ntl, seq(pea[])[!is.na(pop[])])
 
 ntl_df <- data.frame(z = ntl[!is.na(ntl[])], lon = ntl_xy[,1], lat = ntl_xy[,2])
 pea_df <- data.frame(z = pea[!is.na(pea[])], lon = pea_xy[,1], lat = pea_xy[,2])
-cea_df <- data.frame(z = 1/(1+exp(-cea[!is.na(pea[])])), lon = cea_xy[,1], lat = cea_xy[,2])
+cea_df <- data.frame(z = 1/(1+exp(-cea[!is.na(cea[])])), lon = cea_xy[,1], lat = cea_xy[,2])
 pop_df <- data.frame(z = pop[!is.na(pop[])], lon = pop_xy[,1], lat = pop_xy[,2])
 
 

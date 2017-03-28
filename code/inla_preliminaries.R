@@ -18,13 +18,16 @@ afri_main <- readShapePoly("data/Africa_main_country/Africa_main_country.shp")
 
 # Split data
 ix <- sample(1:sum(df$obfuscated))
-half.obfuscated <- sum(df$obfuscated)/2
-df.train <- subset(df, obfuscated)[ix[1:half.obfuscated],]
-df.test1 <- subset(df, obfuscated)[ix[(1 + half.obfuscated):(2*half.obfuscated)],]
+num.train <- round(sum(df$obfuscated)*.8)
+df.train <- subset(df, obfuscated)[ix[1:num.train],]
+df.test1 <- subset(df, obfuscated)[ix[(1 + num.train):sum(df$obfuscated)],]
 df.test2 <- subset(df, !obfuscated)
 
 
 #DELETE these lines
+#df.train <- df.train[sample(1:nrow(df.train), 5000), ]
+#df.test1 <- df.test1[sample(1:nrow(df.test1), 1000), ]
+#df.test2 <- df.test1[sample(1:nrow(df.test2), 1000), ]
 #isosample <- c("KEN")
 #afri_main <- afri_main[afri_main$ISO3 %in% isosample, ]
 #df.train <- subset(df.train, iso3 %in% isosample)
@@ -53,7 +56,8 @@ mesh.s <- inla.mesh.2d(boundary = afri_segment, max.edge = 1.8, cutoff = .9)
 #  mesh.s <- inla.mesh.2d(boundary = afri_segment, max.edge = .3, cutoff = .2)
 #xy <- df[, c("lon", "lat")]
 #plot(mesh.s)
-#points(xy[,1],xy[,2], col = "red", pch = 16)
+#points(df.train$lon, df.train$lat, pch = 16, col = "blue", cex = .2)
+#points(df.test1$lon, df.test1$lat, pch = 16, col = "red", cex = .2)
 afr.spde <- inla.spde2.matern(mesh = mesh.s, alpha = 2)
 
 

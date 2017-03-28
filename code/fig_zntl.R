@@ -31,28 +31,29 @@ df$new_var <- log(df$r_bounded/(1-df$r_bounded)) - df$country_logit_r
 
 plot_density <- ggplot(df, aes(r- country_r_mean)) + geom_density(aes(fill = factor(zero)), alpha = .7)  +
   scale_fill_manual(values = c(myblue, myred), guide = guide_legend(title = "Density")) +
-  xlab("Access to Electricity\n(difference vs country estimate)")   +
-  theme_hc(base_size = font_size) +
-        theme(axis.title.y = element_blank(),
-              #axis.title.x = element_blank(),
-              #axis.ticks.x = element_blank(),
-              #axis.text.y = element_blank(),
-              legend.position = c(.2,.85)) 
+  xlab("Electricity access\n(difference vs country estimate)")   +
+  ylab("Density") +
+  #theme_hc(base_size = font_size) +
+        theme(legend.position = c(.2,.85)) 
 
 
 plot_ntl_hist <- ggplot(df, aes(ntl)) + geom_histogram(fill = mygreen) +
   xlab("NTL\n(luminosity level)") +
+  #theme_hc(base_size = font_size) +
   ylab("") +
-  #ylab("Frequency")   +
-  theme_hc(base_size = font_size)
+  ylab("Frequency")   
 
 
 
-plot_ntl <- ggplot(subset(df, ntl > 0), aes(zpositive.ntl,  r - country_r_mean)) + geom_point(color = myred, alpha=1) +
-#plot_ntl <- ggplot(subset(df, ntl > 0 & is.finite(new_var)), aes(zpositive.ntl,  new_var)) + geom_point(color = myred, alpha=.3) +
+sample_vec <- runif(nrow(df)) < .5
+#plot_ntl <- ggplot(subset(df, ntl > 0 & sample_vec & is.finite(log(r/(1-r)))), aes(zpositive.ntl,  log(r/(1-r)) - country_logit_r)) +
+#plot_ntl <- ggplot(subset(df, ntl > 0 & sample_vec & is.finite(log(r/(1-r)))), aes(zpositive.ntl,  log(r/(1-r)) )) +
+plot_ntl <- ggplot(subset(df, ntl > 0 & sample_vec & is.finite(log(r/(1-r)))), aes(z.ntl,  log(r/(1-r)) )) +
+  #theme_hc(base_size = font_size) +
+  ylim(c(-5,5)) +
+  geom_point(color = myred, alpha = .1) +
   xlab("NTL\n(standardized)") +
-  ylab("Electricity access\n(difference vs country estimate)")   +
-  theme_hc(base_size = font_size)
+  ylab("Electricity access\n(difference vs country estimate)")   
 
 
 plot_pop <- ggplot(subset(df, ntl > 0), aes(zpositive.pop,  r - country_r_mean)) + geom_point(color = mygreen, alpha=.3) +
@@ -60,7 +61,7 @@ plot_pop <- ggplot(subset(df, ntl > 0), aes(zpositive.pop,  r - country_r_mean))
   xlim(-3,7) +
   xlab("Population\n(standardized)") +
   ylab("Electricity access\n(difference vs country estimate)")   +
-  theme_hc(base_size = font_size)
+  #theme_hc(base_size = font_size)
 
 
 

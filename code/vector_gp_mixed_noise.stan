@@ -46,7 +46,7 @@ parameters {
   real<lower=0> rbf_var;
   real<lower=0> rbf_lengthscale;
   real<lower=0> noise_var;
-  real<lower=0, upper=1> rho[output_dim];
+  real<lower=0, upper=1> u[output_dim];
   vector[num_years] GPY[num_countries];
   vector[num_z] GPZ[num_countries];
   
@@ -56,10 +56,11 @@ transformed parameters {
   
   cov_matrix[num_star] K_star;
   real<lower=0> rbf_lengthscale_sq;
-  real<lower=0, upper=1> rho_sq[output_dim];
+  real rho[output_dim];
 
   rbf_lengthscale_sq = pow(rbf_lengthscale,2);
-  for (i in 1:output_dim) rho_sq[i] = pow(rho[i],2);
+  
+  for (i in 1:output_dim) rho[i] <- 2*u[i] - 1;
   
   for (i in 1:num_years) {
     for (j in 1:num_years) {
@@ -71,11 +72,11 @@ transformed parameters {
       
       // Off-diagonal blocks
       for (n in 1:(output_dim-1)) {
-        K_star[i,j+n*num_years] = rho_sq[n]*K_star[i,j];
-        K_star[i+n*num_years,j] = rho_sq[n]*K_star[i,j];
+        K_star[i,j+n*num_years] = rho[n]*K_star[i,j];
+        K_star[i+n*num_years,j] = rho[n]*K_star[i,j];
       }
-      K_star[i+num_years,j+2*num_years] = rho_sq[3]*K_star[i,j];
-      K_star[i+2*num_years,j+num_years] = rho_sq[3]*K_star[i,j];
+      K_star[i+num_years,j+2*num_years] = rho[3]*K_star[i,j];
+      K_star[i+2*num_years,j+num_years] = rho[3]*K_star[i,j];
       
     }
   } 
@@ -88,16 +89,11 @@ model {
   vector[num_star] GP_star[num_countries];
   
   rbf_var ~ gamma(30, 100);
-  // rbf_lengthscale ~ gamma(2, 2);
   rbf_lengthscale ~ gamma(11, 8);
-  #noise_var ~ gamma(1, 1);
-  //rho[1] ~ beta(2, 5);
-  //ho[2] ~ beta(2, 5);
-  //rho[3] ~ beta(5, 2);
   noise_var ~ gamma(20, 1000);
-  rho[1] ~ beta(7, 7);
-  rho[2] ~ beta(7, 7);
-  rho[3] ~ beta(7, 1);
+  u[1] ~ beta(1, 1);
+  u[2] ~ beta(1, 1);
+  u[3] ~ beta(1, 1);
   
   for (q in 1:num_countries) {
     // Prior mean

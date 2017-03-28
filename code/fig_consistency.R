@@ -46,7 +46,7 @@ for(num in num_examples){
    ylim(0,1) +
    ylab("Electricity access proportion") +
    scale_color_manual(values = c(myblue, mygreen), guide = guide_legend(title = iso3list[num])) +
-      theme_hc(base_size = font_size) +
+      #theme_hc(base_size = font_size) +
       theme(axis.title.y = element_text(),
             axis.title.x = element_blank(),
             legend.position = c(.5,hlocation[i])) 
@@ -71,3 +71,20 @@ fig_caver <-ggdraw(xlim = c(0,12), ylim = c(0,16)) +
 fig_caver
 save_plot("figs/fig_consistency.pdf", fig_caver, base_width = 12, base_height = 16)
 
+
+
+
+
+
+###############
+head(annual_data)
+
+
+data15 <- subset(annual_data, year == 2015 & iso3 != "ESH")
+
+eap <- data15$iso3[order(data15$agg_raster, decreasing = TRUE)]
+eah <- data15$iso3[order(data15$r_mean, decreasing = TRUE)]
+
+eadf <- data.frame(eap = eap, eah = eah)
+
+head(annual_data)
