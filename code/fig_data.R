@@ -15,7 +15,7 @@ rm(list = ls())
 # Load and fortify shapefile
 afri_main <- readOGR(dsn = "data/Africa_main_country", layer="Africa_main_country")
 afri_main@data$id <- rownames(afri_main@data)
-afri_main.points <- fortify(afri_main, region = "id")
+afri_main.points <- fortify(afri_main, region = "id", avoidGEOS = FALSE)
 afri_main.df <- join(afri_main.points, afri_main@data, by = "id")
 
 
@@ -145,6 +145,12 @@ wdi_map <- ggplot(afri_main.df) + aes(long, lat, group = group) +
            theme_map(base_size = font_size) +
            coord_equal()
 
+myblue <- "#56B4E9" #"#6495ED"
+mygreen <- "#009E73"#"#86C67C"
+myred <- "#D55E00"#"#EE6A50"
+
+
+
 # Sample points
 afri_aux <- afri_main
 afri_aux$survey[afri_aux$survey == "DHS"] <- "Obfuscated" 
@@ -159,13 +165,13 @@ pts_map <- ggplot(afri_main.df, aes(long, lat)) +
 
 # Annual country-level data points
 timeline <- ggplot(year_surveys, aes(factor(year))) + geom_bar(aes(fill = survey)) +
+            #scale_fill_manual(values = c("#6495ED", "#EE6A50", "#86C67C"), guide = guide_legend(title = "Source")) +
             scale_fill_manual(values = c("#6495ED", "#EE6A50", "#86C67C"), guide = guide_legend(title = "Source")) +
             ylab("No. countries") +
             theme_hc(base_size = font_size) +
             theme(axis.title.x = element_blank(),
                   axis.ticks.x = element_blank(),
                   axis.text.x = element_text(angle = 90, hjust = 1))
-
 
 graphics.off()
 

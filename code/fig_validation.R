@@ -12,9 +12,9 @@ rm(list = ls())
 
 load("code_output/core_model_fit.RData")
 load("code_output/core_model_data.RData")
-myblue <-"#6495ED"
+myblue <- "#E69F00"# "#56B4E9"#"#6495ED"
 mygreen <- "#86C67C"
-myred <- "#EE6A50"
+myred <- "#0072B2"#"#009E73" #"#CC79A7"#"#EE6A50"
 font_size <- 15
 
 
@@ -88,23 +88,38 @@ test1_dens <-
   xlim(0,1) +
   xlab("Probability estimates") +
   ylab("Density") +
-  theme(legend.position = c(.75,.85)) +
-  scale_fill_manual(values = c(myblue, myred), guide = guide_legend(title = "Actual category\n(V1)"))
+  scale_fill_manual(values = c(myblue, myred), guide = guide_legend(title = "Actual category\n(V1)")) +
+  theme_bw() +
+  theme(panel.border = element_blank(),
+        legend.position = c(.75,.85),
+        legend.background = element_rect(fill = "transparent"),
+        legend.text=element_text(size = 12),
+        axis.title.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text = element_text(size = 12),
+        axis.title = element_text(size = 15)) 
 
 
 dftest2 <- data.frame(observed = df.test2$r, predicted = predicted.test2.mean)
 dftest2$dummy <- "No electricity"
 dftest2$dummy[dftest2$observed>.5] <- "Electricity"
-
 test2_dens <-
   ggplot(dftest2, aes(predicted)) +
   geom_density(aes(fill = factor(dummy)), alpha = .70, adjust = 3) +
   xlim(0,1) +
   xlab("Probability estimates") +
   ylab("Density") +
-  #theme_hc(base_size = font_size) +
   theme(legend.position = c(.75,.85)) +
-  scale_fill_manual(values = c(myblue, myred), guide = guide_legend(title = "Actual category\n(V2)"))
+  scale_fill_manual(values = c(myblue, myred), guide = guide_legend(title = "Actual category\n(V2)")) +
+  theme_bw() +
+  theme(panel.border = element_blank(),
+        legend.position = c(.75,.85),
+        legend.background = element_rect(fill = "transparent"),
+        legend.text=element_text(size = 12),
+        axis.title.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text = element_text(size = 12),
+        axis.title = element_text(size = 15)) 
 
 
 false_pos1 <- c()
@@ -123,19 +138,20 @@ for(threshold in 0:1000/1000){
 roc_df <- data.frame(tp1 = true_pos1, fp1 = false_pos1, tp2 = true_pos2, fp2 = false_pos2,
                      dummy1 = "V1", dummy2 = "V2")
 
-
-
-
 plt_roc <- 
   ggplot(roc_df)  +
-  geom_path(aes(fp1, tp1, color = dummy1), size = 1.5) +
-  geom_path(aes(fp2, tp2, color = dummy2), size = 1.5, alpha = .7) +
-  xlab("False positives") +
-  ylab("True  positives") +
-  #theme_hc(base_size = font_size) +
-  theme(legend.position = c(.75,.3)) +
-  scale_color_manual(name=c("ROC curve"), values = c(myred, mygreen)) 
-
+  geom_path(aes(fp1*100, tp1*100, color = dummy1), size = 1.5) +
+  geom_path(aes(fp2*100, tp2*100, color = dummy2), size = 1.5, alpha = .7) +
+  xlab("False positives (%)") +
+  ylab("True  positives (%)") +
+  scale_color_manual(name=c("ROC curve"), values = c("#D55E00", "#0072B2")) +
+  theme_bw() +
+  theme(panel.border = element_blank(),
+        legend.position = c(.75,.3),
+        legend.background = element_rect(fill = "transparent"),
+        legend.text=element_text(size = 12),
+        axis.text = element_text(size = 12),
+        axis.title = element_text(size = 15)) 
 
 
 fig_validation <-
