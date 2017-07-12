@@ -49,9 +49,16 @@ annual_data$right_x[mask15] <- 2015 + .1
 
 source("code/fig_gbox_locations.R")
 
+head(annual_data)
+
+aggmean <- aggregate(annual_data$r_mean ~ annual_data$year, FUN = "mean")
+colnames(aggmean) <- c("year", "r_mean")
+head(aggmean)
+
 fig_hbox <- ggplot(annual_data, aes(as.factor(year), r_mean)) +
             geom_boxplot(fill = "#0072B2") +
             geom_point(col = "#CC79A7", alpha = .5, size = 3) +
+            geom_point(data = aggmean, aes(factor(year),  r_mean), col = "#E69F00", size = 4) + 
             ylab("Electricity access (%)") +
             theme_bw() +
             scale_x_discrete(breaks = factor(seq(2000,2015, by = 3))) +
@@ -61,6 +68,7 @@ fig_hbox <- ggplot(annual_data, aes(as.factor(year), r_mean)) +
                   axis.ticks.x = element_blank(),
                   axis.text = element_text(size = 12),
                   axis.title = element_text(size = 12))
+
 fig_hbox
 save_plot("figs/fig_hbox.pdf", fig_hbox, base_width = 12, base_height = 4)
 

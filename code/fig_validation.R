@@ -60,7 +60,7 @@ for(j in 1:1000){
 }
 tst1 <- rep(predicted.test1.mean, 1000)
 nsim1 <- 1000 * nrow(df.test1)
-threshold = .25
+threshold = .5
 
 round(matrix(100 * c(sum(sim1 == 0 & tst1 <= threshold)/nsim1,
                sum(sim1 == 0 & tst1 > threshold)/nsim1,
@@ -69,7 +69,7 @@ round(matrix(100 * c(sum(sim1 == 0 & tst1 <= threshold)/nsim1,
        nrow = 2, byrow = TRUE), 2)
 
 
-threshold = .25
+threshold = .5
 round(matrix(100 * c(sum(df.test2$r == 0 & predicted.test2.mean <= threshold)/nrow(df.test2),
                sum(df.test2$r == 0 & predicted.test2.mean > threshold)/nrow(df.test2),
                sum(df.test2$r == 1 & predicted.test2.mean <= threshold)/nrow(df.test2),
