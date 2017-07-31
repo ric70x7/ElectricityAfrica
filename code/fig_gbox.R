@@ -49,30 +49,6 @@ annual_data$right_x[mask15] <- 2015 + .1
 
 source("code/fig_gbox_locations.R")
 
-head(annual_data)
-
-aggmean <- aggregate(annual_data$r_mean ~ annual_data$year, FUN = "mean")
-colnames(aggmean) <- c("year", "r_mean")
-head(aggmean)
-
-fig_hbox <- ggplot(annual_data, aes(as.factor(year), r_mean)) +
-            geom_boxplot(fill = "#0072B2") +
-            geom_point(col = "#CC79A7", alpha = .5, size = 3) +
-            geom_point(data = aggmean, aes(factor(year),  r_mean), col = "#E69F00", size = 4) + 
-            ylab("Electricity access (%)") +
-            theme_bw() +
-            scale_x_discrete(breaks = factor(seq(2000,2015, by = 3))) +
-            theme(panel.border = element_blank(),
-                  legend.position="none",
-                  axis.title.x = element_blank(),
-                  axis.ticks.x = element_blank(),
-                  axis.text = element_text(size = 12),
-                  axis.title = element_text(size = 12))
-
-fig_hbox
-save_plot("figs/fig_hbox.pdf", fig_hbox, base_width = 12, base_height = 4)
-
-
 fig_gbox <- ggplot(annual_data, aes(year, r_mean)) +
             geom_text(data = subset(annual_data, right), aes(x = right_x, y = right_y, label = iso3, col = as.factor(iso3)), family = "mono", hjust = 0, size = 5) +
             geom_line(aes(year, r_mean, group = iso3, col = iso3), alpha = .7) +
@@ -92,13 +68,87 @@ fig_gbox
 
 save_plot("figs/fig_gbox.pdf", fig_gbox, base_width = 12, base_height = 16)
 
+######
+
+
+load("code_output/df_afritrend.RData")
+annual_data <- subset(annual_data, iso3 != "ESH")
+
+for (i in 2000:2015) {
+  annual_data$w_pop[annual_data$year == i] <- annual_data$pop[annual_data$year == i]/sum(annual_data$pop[annual_data$year == i])
+  annual_data$ppl[annual_data$year == i] <- annual_data$pop[annual_data$year == i] * annual_data$r_mean[annual_data$year == i] 
+}
+annual_data$w_mean <- annual_data$r_mean * annual_data$w_pop
+
+aggmean1 <- aggregate(annual_data$r_mean ~ annual_data$year, FUN = "mean")
+aggmean2 <- aggregate(annual_data$w_mean ~ annual_data$year, FUN = "sum")
+aggmean3 <- aggregate(annual_data$ppl ~ annual_data$year, FUN = "sum")
+
+colnames(aggmean1) <- c("year", "r_mean")
+aggmean1$w_mean <- aggmean2[,2]
+aggmean1$ppl <- aggmean3[,2]
+
+aggmean1$diff_ppl <- NA
+aggmean1$diff_ppl[2:16] <- diff(aggmean1$ppl)
+
+fig_hbox1 <- ggplot(annual_data, aes(as.factor(year), 100 * r_mean)) +
+             geom_boxplot(fill = "#0072B2") +
+             geom_point(col = "#CC79A7", alpha = .5, size = 3) +
+             #geom_line(data = aggmean1, aes(year-1999, r_mean), col = "#E69F00", size = 1) + 
+             ylab("Electricity access (%)") +
+             theme_bw() +
+             scale_x_discrete(breaks = factor(seq(2000,2015, by = 5))) +
+             theme(panel.border = element_blank(),
+                   legend.position="none",
+                   axis.title.x = element_blank(),
+                   axis.ticks.x = element_blank(),
+                   axis.text = element_text(size = 12),
+                   axis.title = element_text(size = 12))
+
+fig_hbox2 <- ggplot(aggmean1, aes(as.factor(year), 100 * w_mean)) +
+             geom_line(data = aggmean1, aes(year, 100 * w_mean), col = mygreen, size = 1) + 
+             ylim(c(0,100)) +
+             ylab("Electricity access (%)") +
+             theme_bw() +
+             theme(panel.border = element_blank(),
+                   legend.position="none",
+                   axis.title.x = element_blank(),
+                   axis.ticks.x = element_blank(),
+                   axis.text = element_text(size = 12),
+                   axis.title = element_text(size = 12))
+
+
+fig_hbox3 <- ggplot(aggmean1, aes(as.factor(year), diff_ppl/1000000)) +
+             geom_col(fill = "#E69F00", size = 1) + 
+             ylab("Annual increase in electricity access\n (millions of people)") +
+             theme_bw() +
+             scale_x_discrete(breaks = factor(seq(2000,2015, by = 5))) +
+             theme(panel.border = element_blank(),
+                   legend.position="none",
+                   axis.title.x = element_blank(),
+                   axis.ticks.x = element_blank(),
+                   axis.text = element_text(size = 12),
+                   axis.title = element_text(size = 12))
+
+
+fig_hbox <- ggdraw(xlim = c(0,12), ylim = c(0,4)) +
+            draw_plot(fig_hbox1, x = 0, y = 0, width = 4, height = 4) +
+            draw_plot(fig_hbox2, x = 4, y = 0, width = 4, height = 4) +
+            draw_plot(fig_hbox3, x = 8, y = 0, width = 4, height = 4) +
+            draw_plot_label(c("A", "B", "C"), c(0, 4, 8), c(4, 4, 4), size = 18, color = "grey")
+
+
+save_plot("figs/fig_hbox.pdf", fig_hbox, base_width = 12, base_height = 4)
+
+
+
 #fig_data <- ggdraw(xlim = c(0,12), ylim = c(0,20)) +
 #            draw_plot(fig_gbox, x = 0, y = 8, width = 12, height = 12) +
 #            draw_plot(fig_hbox, x = 0, y = 0, width = 12, height = 8) +
 #            draw_plot_label(c("A", "B"), c(0, 0), c(20, 4), size = 18, color = "grey")
 #fig_data
 
-save_plot("figs/fig_boxntrends.pdf", fig_data, base_width = 12, base_height = 8)
+#save_plot("figs/fig_boxntrends.pdf", fig_data, base_width = 12, base_height = 8)
 graphics.off( )
 
 mean(annual_data$r_mean[annual_data$year == 2000])
