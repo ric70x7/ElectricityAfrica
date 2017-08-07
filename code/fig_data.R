@@ -145,7 +145,7 @@ wdi_map <- ggplot(afri_main.df) + aes(long, lat, group = group) +
            theme_map(base_size = font_size) +
            coord_equal()
 
-myblue <- "#56B4E9" #"#6495ED"
+myblue <- #56B4E9" #"#6495ED"
 mygreen <- "#009E73"#"#86C67C"
 myred <- "#D55E00"#"#EE6A50"
 
@@ -159,14 +159,16 @@ sample_vec <- runif(nrow(df.samples), 0, 1)  < .1
 pts_map <- ggplot(afri_main.df, aes(long, lat)) +
            geom_polygon(aes(group = group), colour = "grey", fill = "white") +
            geom_point(data = subset(df.samples, sample_vec), aes(lon, lat, color = survey), alpha = .15, size = 1) +
-           scale_color_manual(values = c("#6495ED", "#EE6A50"), guide = guide_legend(title = "Survey\nlocations")) +
+           #scale_color_manual(values = c("#6495ED", "#EE6A50"), guide = guide_legend(title = "Survey\nlocations")) +
+           scale_color_manual(values = c("#56B4E9", "#D55E00"), guide = guide_legend(title = "Survey\nlocations")) +
            theme_map(base_size = font_size) +
            coord_equal()
 
 # Annual country-level data points
 timeline <- ggplot(year_surveys, aes(factor(year))) + geom_bar(aes(fill = survey)) +
             #scale_fill_manual(values = c("#6495ED", "#EE6A50", "#86C67C"), guide = guide_legend(title = "Source")) +
-            scale_fill_manual(values = c("#6495ED", "#EE6A50", "#86C67C"), guide = guide_legend(title = "Source")) +
+            #scale_fill_manual(values = c("#6495ED", "#EE6A50", "#86C67C"), guide = guide_legend(title = "Source")) +
+            scale_fill_manual(values = c("#56B4E9", "#D55E00", "#009E73"), guide = guide_legend(title = "Source")) +
             ylab("No. countries") +
             theme_hc(base_size = font_size) +
             theme(axis.title.x = element_blank(),
