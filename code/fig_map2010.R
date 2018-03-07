@@ -45,7 +45,8 @@ pltpea <- ggplot(pea_df, aes(lon, lat)) +
        coord_equal() +
        theme_map() +
        theme(legend.position = c(.05,.05), legend.key.width = unit(.8, "cm")) +
-       scale_fill_viridis(limits = c(0, 1), guide = guide_colorbar(title = paste("Geostatistic\nmodel\n", pltyear, sep = " ")))
+       #scale_fill_viridis(limits = c(0, 1), guide = guide_colorbar(title = paste("Geostatistic\nmodel\n", pltyear, sep = " ")))
+       scale_fill_viridis(limits = c(0, 1), guide = guide_colorbar(title = paste("Probability of\nelectricity access\n", pltyear, sep = " ")))
 
 pltcea <- ggplot(cea_df, aes(lon, lat)) +
        geom_raster(aes(fill = z)) +
@@ -68,21 +69,21 @@ fig_map <- ggdraw(xlim = c(0,8), ylim = c(0,8)) +
             draw_plot(pltcea, x = 0, y = 0, width = 4, height = 4) +
             draw_plot(pltpea, x = 4, y = 0, width = 4, height = 4) +
             draw_plot_label(c("A", "B", "C", "D"), c(0, 4, 0, 4), c(8, 8, 4, 4), size = 18, color = "grey")
-            save_plot("figs/fig_map.pdf", fig_map, base_width = 8, base_height = 8)
+            save_plot("figs/fig_map_revised.pdf", fig_map, base_width = 8, base_height = 8)
             
             
             
-plots_list <- list() 
-for(i in 1:16){
-  pltyear <- 1999 + i
-  pea <- raster(paste("code_output/Electricity/access_", pltyear, ".tif",  sep = ""))
-  pea_xy <- xyFromCell(ntl, seq(pea[])[!is.na(pea[])])
-  pea_df <- data.frame(z = pea[!is.na(pea[])], lon = pea_xy[,1], lat = pea_xy[,2])
-  plots_list[[i]] <- ggplot(pea_df, aes(lon, lat)) +
-       geom_raster(aes(fill = z)) +
-       coord_equal() +
-       theme_map() +
-       theme(legend.position = c(.05,.05), legend.key.width = unit(.8, "cm")) +
-       scale_fill_viridis(limits = c(0, 1), guide = guide_colorbar(title = paste("Geostatistic\nmodel\n", pltyear, sep = " ")))
-  save_plot(paste("figs/ggmaps/pea_", pltyear, ".png", sep = ""), plots_list[[i]], base_width = 8, base_height = 8)
-}
+#plots_list <- list() 
+#for(i in 1:16){
+#  pltyear <- 1999 + i
+#  pea <- raster(paste("code_output/Electricity/access_", pltyear, ".tif",  sep = ""))
+#  pea_xy <- xyFromCell(ntl, seq(pea[])[!is.na(pea[])])
+#  pea_df <- data.frame(z = pea[!is.na(pea[])], lon = pea_xy[,1], lat = pea_xy[,2])
+#  plots_list[[i]] <- ggplot(pea_df, aes(lon, lat)) +
+#       geom_raster(aes(fill = z)) +
+#       coord_equal() +
+#       theme_map() +
+#       theme(legend.position = c(.05,.05), legend.key.width = unit(.8, "cm")) +
+#       scale_fill_viridis(limits = c(0, 1), guide = guide_colorbar(title = paste("Geostatistic\nmodel\n", pltyear, sep = " ")))
+#  save_plot(paste("figs/ggmaps/pea_", pltyear, ".png", sep = ""), plots_list[[i]], base_width = 8, base_height = 8)
+#}
