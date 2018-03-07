@@ -61,7 +61,7 @@ Edite October 17, 2016
 13) inla_model_w_offsets.R
     Code for running INLA
     
-16) inla_model_validation.R
+16) fig_validation.R //inla_model_validation.R
     ROC curves, and confusion matrices for test data
     
 17) inla_model_interpolation_check.R
