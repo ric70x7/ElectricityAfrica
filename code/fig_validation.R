@@ -10,8 +10,8 @@ library(ggthemes)
 library(cowplot)
 rm(list = ls())
 
-load("code_output/core_model_fit.RData")
-load("code_output/core_model_data.RData")
+load("code_output/core_model_fit_revised.RData")
+load("code_output/core_model_data_revised.RData")
 myblue <- "#E69F00"# "#56B4E9"#"#6495ED"
 mygreen <- "#86C67C"
 myred <- "#0072B2"#"#009E73" #"#CC79A7"#"#EE6A50"
@@ -54,9 +54,12 @@ plot(false_pos, true_pos, type = "l")
 
 sim1 <- c()
 for(j in 1:1000){
+  sim_sub <- rep(NA, nrow(df.test1))
   for(i in 1:nrow(df.test1)){
-    sim1[i] <- rbinom(n = 1, size = 1, prob = df.test1$r[i])
+    #sim1[i] <- rbinom(n = 1, size = 1, prob = df.test1$r[i])
+    sim_sub[i] <- rbinom(n = 1, size = 1, prob = df.test1$r[i])
   }
+  sim1 <- c(sim1, sim_sub)
 }
 tst1 <- rep(predicted.test1.mean, 1000)
 nsim1 <- 1000 * nrow(df.test1)
@@ -68,6 +71,16 @@ round(matrix(100 * c(sum(sim1 == 0 & tst1 <= threshold)/nsim1,
                sum(sim1 == 1 & tst1 > threshold)/nsim1),
        nrow = 2, byrow = TRUE), 2)
 
+tp1 <- sum(sim1 == 1 & tst1 > threshold)
+fp1 <- sum(sim1 == 1 & tst1 <= threshold)
+tn1 <- sum(sim1 == 0 & tst1 <= threshold)
+fn1 <- sum(sim1 == 0 & tst1 > threshold)
+
+# Precision
+tp1/(tp1 + fp1)
+# Recall
+tp1/(tp1 + fn1)
+
 
 threshold = .5
 round(matrix(100 * c(sum(df.test2$r == 0 & predicted.test2.mean <= threshold)/nrow(df.test2),
@@ -75,6 +88,19 @@ round(matrix(100 * c(sum(df.test2$r == 0 & predicted.test2.mean <= threshold)/nr
                sum(df.test2$r == 1 & predicted.test2.mean <= threshold)/nrow(df.test2),
                sum(df.test2$r == 1 & predicted.test2.mean > threshold)/nrow(df.test2)),
        nrow = 2, byrow = TRUE), 2)
+
+tp2 <- sum(df.test2$r == 1 & predicted.test2.mean > threshold)
+fp2 <- sum(df.test2$r == 1 & predicted.test2.mean <= threshold)
+tn2 <- sum(df.test2$r == 0 & predicted.test2.mean <= threshold)
+fn2 <- sum(df.test2$r == 0 & predicted.test2.mean > threshold)
+
+tp2/(tp2 + fp2 + tn2 + fn2)
+tn2/(tp2 + fp2 + tn2 + fn2)
+
+# Precision
+tp2/(tp2 + fp2)
+# Recall
+tp2/(tp2 + fn2)
 
 
 
@@ -160,5 +186,5 @@ fig_validation <-
   draw_plot(test2_dens, x = 4, y = 0, width = 4, height = 3.7) +
   draw_plot(plt_roc, x = 8, y = 0, width = 4, height = 3.7) +
   draw_plot_label(c("A", "B", "C"), c(0, 4, 8), c(4, 4, 4), size = 18, color = "grey")
-save_plot("figs/fig_validation.pdf", fig_validation, base_width = 12, base_height = 4)
+save_plot("figs/fig_validation_revised.pdf", fig_validation, base_width = 12, base_height = 4)
 
