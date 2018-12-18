@@ -11,17 +11,17 @@ library(maptools)
 
 graphics.off()
 rm(list = ls())
-#load("code_output/merged_data.RData")
-load("code_output/merged_data2.RData")
-afri_main <- readShapePoly("data/Africa_main_country/Africa_main_country.shp")
-
+set.seed(100)
+load("code_output/df_model.RData")
+afri_main <- rgdal::readOGR("data/Africa_main_country/Africa_main_country.shp")
 
 # Split data
-ix <- sample(1:sum(df$obfuscated))
-num.train <- round(sum(df$obfuscated)*.8)
-df.train <- subset(df, obfuscated)[ix[1:num.train],]
-df.test1 <- subset(df, obfuscated)[ix[(1 + num.train):sum(df$obfuscated)],]
-df.test2 <- subset(df, !obfuscated)
+df_model <- subset(df_model, year <= 2013)
+num.train <- round(sum(df_model$obfuscated)*.7)
+ix <- sample(1:sum(df_model$obfuscated))
+df.train <- subset(df_model, obfuscated)[ix[1:num.train],]
+df.test1 <- subset(df_model, obfuscated)[ix[(1 + num.train):sum(df_model$obfuscated)],]
+df.test2 <- subset(df_model, !obfuscated)
 
 # Define a list to store metadata
 meta <- list()
@@ -35,7 +35,7 @@ mesh.t <- inla.mesh.1d(loc = df.train$year, interval = c(min(df.train$year), max
 # Spatial mesh
 afri_border <- unionSpatialPolygons(afri_main, rep(1, nrow(afri_main)))
 afri_segment <- inla.sp2segment(afri_border)
-mesh.s <- inla.mesh.2d(boundary = afri_segment, max.edge = 1.8, cutoff = .9)
+mesh.s <- inla.mesh.2d(boundary = afri_segment, max.edge = 1.5, cutoff = 1.4)
 afr.spde <- inla.spde2.matern(mesh = mesh.s, alpha = 2)
 
 # Indices associated to the observations

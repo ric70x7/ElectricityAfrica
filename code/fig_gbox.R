@@ -107,7 +107,8 @@ fig_hbox1 <- ggplot(annual_data, aes(as.factor(year), 100 * r_mean)) +
 
 fig_hbox2 <- ggplot(aggmean1, aes(as.factor(year), 100 * w_mean)) +
              geom_line(data = aggmean1, aes(year, 100 * w_mean), col = mygreen, size = 1) + 
-             ylim(c(0,100)) +
+             geom_point(data = aggmean1, aes(year, 100 * w_mean), col = mygreen, size = 3) + 
+             ylim(c(35,50)) +
              ylab("Electricity access (%)") +
              theme_bw() +
              theme(panel.border = element_blank(),
@@ -136,9 +137,15 @@ fig_hbox <- ggdraw(xlim = c(0,12), ylim = c(0,4)) +
             draw_plot(fig_hbox2, x = 4, y = 0, width = 4, height = 4) +
             draw_plot(fig_hbox3, x = 8, y = 0, width = 4, height = 4) +
             draw_plot_label(c("A", "B", "C"), c(0, 4, 8), c(4, 4, 4), size = 18, color = "grey")
-
-
 save_plot("figs/fig_hbox.pdf", fig_hbox, base_width = 12, base_height = 4)
+
+fig_hboxz <- ggdraw(xlim = c(0,12), ylim = c(0,4)) +
+             draw_plot(fig_hbox1, x = 0, y = 0, width = 6, height = 4) +
+             draw_plot(fig_hbox2, x = 6, y = 0, width = 6, height = 4) +
+             #draw_plot(fig_hbox3, x = 8, y = 0, width = 4, height = 4) +
+             draw_plot_label(c("A", "B"), c(0, 6), c(4, 4), size = 18, color = "grey")
+
+save_plot("figs/fig_hboxz.pdf", fig_hboxz, base_width = 12, base_height = 4)
 
 
 

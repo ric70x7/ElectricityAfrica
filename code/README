@@ -38,7 +38,7 @@ Edite October 17, 2016
     Clean DHS surveys and organize them in a data frame
     
  9) additional_surveys_preprocess.R
-    Put surveys, appart form DHS, in a data frame
+    Put surveys appart form DHS in a data frame
     
 10) third_set_surveys.R
     Put third set of surveys in a data frame
@@ -51,14 +51,16 @@ Edite October 17, 2016
     
 #12) set3_w_covariates.R
 #    Add covariates to set3
+
+11.min) resample_lulc.R    
     
-11) combine_datasets.R
+11) _combine_datasets.R -> combine_datasets2.R
     Merge DHS surveys and set 3
     
 12) inla_preliminaries.R
     Define mesh and data indices
   
-13) inla_model_w_offsets.R
+13) inla_model_w_offsets2.R
     Code for running INLA
     
 16) fig_validation.R //inla_model_validation.R
@@ -67,7 +69,7 @@ Edite October 17, 2016
 17) inla_model_interpolation_check.R
     Check the posterior approximation based on the interpolation of the latent field
     
-18) inla_model_rasters.R
+18) inla_model_rasters2.R
     Raster file of predicted probability of electricity
     
 19) inla_model_country_aggregates.R
