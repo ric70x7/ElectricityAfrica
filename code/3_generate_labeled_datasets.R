@@ -42,8 +42,8 @@ dhs_offset <- function(pts) {
   offset.dist[sample(1:n, rur.n, replace = FALSE)] <- 10/111 # 1% of points is offset up to 10 km
   r.pts0 <- c()
   
-  #for(i in 1:nrow(pts)){
-  for(i in 18586:nrow(pts)){
+  for(i in 1:nrow(pts)){
+  #for(i in 18586:nrow(pts)){
     print(i)
     pdsc <- spatstat::disc(radius = offset.dist[i], centre = as.numeric(pts[i,]))
     pdsc <- as(pdsc, "SpatialPolygons")
