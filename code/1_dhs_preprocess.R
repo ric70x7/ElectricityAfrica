@@ -223,4 +223,14 @@ df2$obfuscated <- FALSE
 cnames <- c("country", "iso3", "year", "lon", "lat", "has_electricity", "total", "r", "obfuscated")
 df <- rbind(rbind(df3[, cnames], df2[, cnames]), df1[, cnames])
 
-save(df, file = "code_output/merged_data2.RData")
+#save(df, file = "code_output/merged_data2.RData")
+#load("code_output/merged_data2.RData")
+
+
+
+#nrow(unique(subset(df, year<2014)[, c("iso3", "year")])) #75 - 1(because of Comoros)
+nrow(unique(subset(df1, year<=2013)[, c("iso3", "year")])) #70
+nrow(unique(subset(df2, year<=2013)[, c("iso3", "year")])) # 6
+#nrow(unique(df3[, c("iso3", "year")])) df3 excluded because year > 2013
+#nrow(unique(df[, c("iso3", "year")]))
+
