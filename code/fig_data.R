@@ -18,11 +18,9 @@ afri_main@data$id <- rownames(afri_main@data)
 afri_main.points <- fortify(afri_main, region = "id", avoidGEOS = FALSE)
 afri_main.df <- join(afri_main.points, afri_main@data, by = "id")
 
-
 # Identify survey in  country stats
 electricity_access <- read.csv("data/DHS_electricity_access_by_country.csv")
 electricity_access <- subset(electricity_access, year >= 2000)
-
 
 # Islands "COM" and "STP" not in study
 electricity_access <- subset(electricity_access, iso3 != "COM" & iso3 != "STP")

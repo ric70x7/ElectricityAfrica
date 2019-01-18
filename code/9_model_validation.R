@@ -54,7 +54,6 @@ stack_6_3 <- inla.stack(data = list(y = NA),
                                    list(year = df.test2$year)),
                         tag = "test2")
 
-
 # Join stacks
 stack_6 <- do.call(inla.stack, list(stack_6_1, stack_6_2, stack_6_3))
 ix_train <- inla.stack.index(stack_6, tag="train")
@@ -70,11 +69,7 @@ m_6 <- inla(predictor_6,  data = inla.stack.data(stack_6), family = "binomial",
 
 #save(df.train, df.test1, df.test2, ix_train, ix_test1, ix_test2, m_6,
 #     file="code_output/validation_data.RData")
-
-library(INLA)
-library(raster)
-library(maptools)
-load("code_output/validation_data.RData")
+#load("code_output/validation_data.RData")
 
 # Make predictions
 pred_train <- c()
@@ -173,3 +168,27 @@ tp2/(tp2 + fp2)
 tp2/(tp2 + fn2)
 
 
+
+
+#####################
+aux <- cbind(df.test2$y, pred_test2)
+aux0 <- aux[aux[,1] == 0, ]
+aux1 <- aux[aux[,1] == 1, ]
+aux3 <- rbind(aux1, aux1)
+zz <- rbind(aux0, aux3)
+
+nrow(aux1)/(nrow(aux))
+nrow(aux3)/(nrow(aux3) + nrow(aux0))
+
+tp2 <- sum(zz[,1] == 1 & zz[,2] > threshold)
+fp2 <- sum(zz[,1] == 1 & zz[,2] <= threshold)
+tn2 <- sum(zz[,1] == 0 & zz[,2] <= threshold)
+fn2 <- sum(zz[,1] == 0 & zz[,2] > threshold)
+# Precision
+tp2/(tp2 + fp2)
+# Recall
+tp2/(tp2 + fn2)
+
+(tp2 + tn2)/nrow(zz)
+
+#####################

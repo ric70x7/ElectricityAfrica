@@ -405,44 +405,59 @@ cowplot::ggsave('figs/comparison_estimates.pdf', plt_vs, width=12, height=4)
 
 
 # Exact data vs obfuscated
-diff_locs <- data.frame(lon_tr = dftruth$lon, lon_ob = dfobfsc$lon,
-                        lat_tr = dftruth$lat, lat_ob = dfobfsc$lat)
-ixlocs <- sample(1:nrow(diff_locs), 4000)
-diff_locs <- diff_locs[ixlocs, ]
+#diff_locs <- data.frame(lon_tr = dftruth$lon, lon_ob = dfobfsc$lon,
+#                        lat_tr = dftruth$lat, lat_ob = dfobfsc$lat)
+#ixlocs <- sample(1:nrow(diff_locs), 4000)
+#diff_locs <- diff_locs[ixlocs, ]
+#
+#pltlon <- ggplot(diff_locs, aes(lon_tr, lon_ob)) +
+#  geom_point(col=viridis::viridis_pal(option="E")(2)[1]) +
+#  scale_y_continuous("Longitude (obfuscated)", limits = c(-2, 0)) +
+#  scale_x_continuous("Longitude (exact)", limits = c(-2, 0)) +
+#  theme_classic() +
+#  gtheme
+#
+#pltlat <- ggplot(diff_locs, aes(lat_tr, lat_ob)) +
+#  geom_point(col=viridis::viridis_pal(option="E")(2)[1]) +
+#  scale_y_continuous("Latitude (obfuscated)", limits = c(-2, 0)) +
+#  scale_x_continuous("Latitude (exact)", limits = c(-2, 0)) +
+#  theme_classic() +
+#  gtheme
+
+centered_diff <- data.frame(lon = (dfobfsc$lon - dftruth$lon)*111,
+                            lat = (dfobfsc$lat - dftruth$lat)*111)
 
 distob <- data.frame(distance = sqrt(rowSums((dftruth[, c("lon", "lat")] - dfobfsc[, c("lon", "lat")])^2)) * 111)
 
-pltlon <- ggplot(diff_locs, aes(lon_tr, lon_ob)) +
-  geom_point(col=viridis::viridis_pal(option="E")(2)[1]) +
-  scale_y_continuous("Longitude (obfuscated)", limits = c(-2, 0)) +
-  scale_x_continuous("Longitude (exact)", limits = c(-2, 0)) +
-  theme_classic() +
-  gtheme
-
-pltlat <- ggplot(diff_locs, aes(lat_tr, lat_ob)) +
-  geom_point(col=viridis::viridis_pal(option="E")(2)[1]) +
-  scale_y_continuous("Latitude (obfuscated)", limits = c(-2, 0)) +
-  scale_x_continuous("Latitude (exact)", limits = c(-2, 0)) +
-  theme_classic() +
-  gtheme
+#pltcirc <- ggplot(subset(centered_diff, lat>=0), aes(lon, lat)) +
+  #geom_point(col=viridis::viridis_pal(option="E")(2)[1], alpha=.3) +
+pltcirc <- ggplot(centered_diff[seq(1,nrow(centered_diff), by=4),], aes(lon, lat)) +
+  geom_point(col="magenta", alpha=.4) + geom_point(data=data.frame(lon=0, lat=0), color="darkred", size=2.5) +
+  geom_text(data=data.frame(lon=5, lat=0, txt="|"), aes(label=txt), color="darkred", size=8) +
+  geom_text(data=data.frame(lon=10, lat=0, txt="|"), aes(label=txt), color="darkred", size=8) +
+  geom_text(data=data.frame(lon=5, lat=0, txt="5 km"), nudge_x=-1.2, nudge_y=-1.2, aes(label=txt), color="darkred", size=8) +
+  geom_text(data=data.frame(lon=10, lat=0, txt="10 km"), nudge_x=-1.2, nudge_y=-1.2, aes(label=txt), color="darkred", size=8) +
+  geom_line(data=data.frame(lon=c(0, 10), lat=c(0, 0)), color="darkred", size=1) +
+  scale_y_continuous("Offset (km)") +
+  scale_x_continuous("Offset (km)") +
+  coord_fixed() +
+  theme_void() #+ gtheme
 
 plthist <- ggplot(distob, aes(distance)) +
   geom_histogram(breaks=c(seq(0,10, by=1)), fill=viridis::viridis_pal(option="E")(2)[2],
                  col=viridis::viridis_pal(option="E")(2)[1]) +
   scale_y_continuous("Count") +
-  scale_x_continuous("Offset (Km)") +
+  scale_x_continuous("Offset (km)") +
   theme_classic() +
   gtheme
 
 # Panel plot
 psc <- 4
 plt_off <- cowplot::ggdraw(xlim=c(0,3*psc), ylim = c(0,1*psc)) +
-        cowplot::draw_plot(pltlon, x=0*psc, y=0*psc, width = 1*psc, height = 1*psc) + 
-        cowplot::draw_plot(pltlat, x=1*psc, y=0*psc, width = 1*psc, height = 1*psc) + 
-        cowplot::draw_plot(plthist, x=2*psc, y=0*psc, width = 1*psc, height = 1*psc) + 
-
-        cowplot::draw_plot_label(LETTERS[1:3], (0:2)*psc, rep(1, 3)*psc,
-                                 size=18, colour = "grey")
+           cowplot::draw_plot(pltcirc, x=0*psc, y=0*psc, width = 1.5*psc, height = 1*psc) + 
+           cowplot::draw_plot(plthist, x=1.5*psc, y=0*psc, width = 1.5*psc, height = 1*psc) + 
+           cowplot::draw_plot_label(LETTERS[1:2], c(0, 1.5)*psc, rep(1, 2)*psc,
+                                    size=18, colour = "grey")
 
 cowplot::ggsave('figs/offset_distance.pdf', plt_off, width=12, height=4)
 
@@ -501,7 +516,7 @@ sse_1_tr <- sum((dftruth$y / dftruth$total - model_p1_tr$summary.fitted.values$m
 sse_1_ob <- sum((dftruth$y / dftruth$total - model_p1_ob$summary.fitted.values$mean[stack_ix_ob$data])^2)
 
 sse_0_ob / sse_0_tr
-sse_1_ob / sse_1_tr
+100 *(sse_1_ob / sse_1_tr - 1)
 
 save(df_fixed, df_marginals, dfmainb, dfbias, dfsd, dflogbias,
      dflogsd, dfvs, sse_0_tr, sse_0_ob, sse_1_tr, sse_1_ob,

@@ -5,7 +5,7 @@
 library(foreign)
 library(raster)
 library(maptools)
-
+rm(list = ls())
 
 dhs_preprocess_set1 <- function() {
   # Function for the first batch of data.

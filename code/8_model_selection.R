@@ -25,8 +25,8 @@ predictor_5 <- y ~ -1 + factor(ctyp) + udis + ntlg + fimp + f(u.field, model=afr
 predictor_6 <- y ~ -1 + factor(ctyp) + udis + ntlg + fimp + f(u.field, model=afr.spde) + year
 predictor_7 <- y ~ -1 + factor(ctyp) + udis + ntlg + fimp + f(u_ar.field, model=afr.spde, group=u_ar.field.group, control.group=list(model="ar1"))
 
-u.f <- inla.spde.make.index(name = "u.field", n.spde = afr.spde$n.spde) # random field model 5 and 7
-u_ar.f <- inla.spde.make.index(name = "u_ar.field", n.spde = afr.spde$n.spde, n.group = 14) # random field model 6
+u.f <- inla.spde.make.index(name = "u.field", n.spde = afr.spde$n.spde) # random field model 5 and 6
+u_ar.f <- inla.spde.make.index(name = "u_ar.field", n.spde = afr.spde$n.spde, n.group = 14) # random field model 7
 
 A_5 <- inla.spde.make.A(mesh = mesh.s, loc = as.matrix(meta$points$spatial)) # A model 5
 A_6 <- inla.spde.make.A(mesh = mesh.s, loc = as.matrix(meta$points$spatial)) # A model 6
@@ -97,10 +97,65 @@ m_7 <- inla(predictor_7,  data = inla.stack.data(stack_7), family = "binomial", 
           control.compute = list(dic=TRUE, cpo=TRUE, config=TRUE),
           control.inla = list(h=.03))
 
-sum(log(m_1$cpo$cpo))
-sum(log(m_2$cpo$cpo))
-sum(log(m_3$cpo$cpo))
+
+load("code_output/m_57.RData")
+
+#sum(log(m_1$cpo$cpo))
+#sum(log(m_2$cpo$cpo))
+#sum(log(m_3$cpo$cpo))
 sum(log(m_4$cpo$cpo))
 sum(log(m_5$cpo$cpo))
 sum(log(m_6$cpo$cpo))
 sum(log(m_7$cpo$cpo))
+
+
+
+
+# Fixed effects parameter names
+beta_names <- c("Impervious surface",
+                "Low biomass",
+                "High biomass",
+                "Bare soil",
+                "Sand",
+                "Rock",
+                "Water",
+                "Impervious area proportion",
+                "Nighttime lights",
+                "Distance to impervious pixel", 
+                "Year",
+                "log-Kappa",
+                "log-Nominal variance",
+                "log-Nominal range",
+                "Rho",
+                "CPO")
+
+# Random effects parameters distributions
+out_m_5 <- inla.spde2.result(inla=m_5, name="u.field", spde=afr.spde, do.transform = TRUE)
+out_m_6 <- inla.spde2.result(inla=m_6, name="u.field", spde=afr.spde, do.transform = TRUE)
+out_m_7 <- inla.spde2.result(inla=m_7, name="u_ar.field", spde=afr.spde, do.transform = TRUE)
+
+dffix <- data.frame(m_4 = c(exp(m_4$summary.fixed$mean), NA),
+                    m_5 = c(exp(m_5$summary.fixed$mean), NA),
+                    m_6 = exp(m_6$summary.fixed$mean),
+                    m_7 = c(exp(m_7$summary.fixed$mean), NA))
+
+dfrnd <- data.frame(m_4 = rep(NA, 4),
+                    m_5 = c(out_m_5$summary.log.kappa$mean,
+                            out_m_5$summary.log.variance.nominal$mean,
+                            out_m_5$summary.log.range.nominal$mean, NA),
+                    m_6 = c(out_m_6$summary.log.kappa$mean,
+                            out_m_6$summary.log.variance.nominal$mean,
+                            out_m_6$summary.log.range.nominal$mean, NA),
+                    m_7 =  c(out_m_7$summary.log.kappa$mean,
+                            out_m_7$summary.log.variance.nominal$mean,
+                            out_m_7$summary.log.range.nominal$mean,
+                            m_7$summary.hyperpar["GroupRho", "mean"]))
+
+
+export <- round(rbind(dffix, dfrnd), 2)
+export <- rbind(export, c(sum(log(m_4$cpo$cpo)), sum(log(m_5$cpo$cpo)),
+                          sum(log(m_6$cpo$cpo)), sum(log(m_7$cpo$cpo))))
+rownames(export) <- beta_names
+
+
+
