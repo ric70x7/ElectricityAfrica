@@ -11,7 +11,8 @@ trends <- data.frame(iso3 = rep(afri_main$ISO3, 14 * 3),
                             year = rep(sort(rep(2000:2013,  num_countries)), 3),
                             type = sort(rep(c("urban", "rural", "total"), 14 * num_countries)),
                             pix_total = NA, pix_electricity = NA,
-                            pop_total = NA, pop_electricity = NA)
+                            pop_total = NA, pop_electricity = NA,
+                            pop_pix = NA)
 
 for (i in 1:14) {
   
@@ -23,7 +24,7 @@ for (i in 1:14) {
   popl <- raster::raster(file_popl)
 
   for(iso3j in afri_main$ISO3){  #iso3j <- "MAR"
-    
+
     shp_boundary <- afri_main[afri_main$ISO3 == iso3j,]
     iso3j_fimp <- mask(fimp, shp_boundary)
     iso3j_elec <- mask(elec, shp_boundary)
@@ -40,8 +41,8 @@ for (i in 1:14) {
     trends$pix_total[row_mask & trends$type == "total"] <- trends$pix_total[row_mask & trends$type == "urban"] +
                                                            trends$pix_total[row_mask & trends$type == "rural"]
 
-    trends$pix_electricity[row_mask & trends$type == "urban"] <- sum(iso3j_elec[mask_urban & mask_electricity], na.rm =TRUE)
-    trends$pix_electricity[row_mask & trends$type == "rural"] <- sum(iso3j_elec[mask_rural & mask_electricity], na.rm =TRUE)
+    trends$pix_electricity[row_mask & trends$type == "urban"] <- sum(mask_urban & mask_electricity, na.rm = TRUE)
+    trends$pix_electricity[row_mask & trends$type == "rural"] <- sum(mask_rural & mask_electricity, na.rm = TRUE)
     trends$pix_electricity[row_mask & trends$type == "total"] <- trends$pix_electricity[row_mask & trends$type == "urban"] +
                                                                  trends$pix_electricity[row_mask & trends$type == "rural"] 
 
@@ -50,13 +51,19 @@ for (i in 1:14) {
     trends$pop_total[row_mask & trends$type == "total"] <- sum(iso3j_popl[mask_urban], na.rm =TRUE) +
                                                             sum(iso3j_popl[mask_rural], na.rm =TRUE)
     
-    trends$pop_electricity[row_mask & trends$type == "urban"] <- sum(iso3j_popl[mask_urban & mask_electricity], na.rm =TRUE)
-    trends$pop_electricity[row_mask & trends$type == "rural"] <- sum(iso3j_popl[mask_rural & mask_electricity], na.rm =TRUE)
+    trends$pop_electricity[row_mask & trends$type == "urban"] <- sum(iso3j_popl[mask_urban] * iso3j_elec[mask_urban], na.rm =TRUE)
+    trends$pop_electricity[row_mask & trends$type == "rural"] <- sum(iso3j_popl[mask_rural] * iso3j_elec[mask_rural], na.rm =TRUE)
     trends$pop_electricity[row_mask & trends$type == "total"] <- trends$pop_electricity[row_mask & trends$type == "urban"] +
                                                                  trends$pop_electricity[row_mask & trends$type == "rural"]
+    
+    trends$pop_pix[row_mask & trends$type == "urban"] <- sum(iso3j_popl[mask_urban & mask_electricity], na.rm =TRUE)
+    trends$pop_pix[row_mask & trends$type == "rural"] <- sum(iso3j_popl[mask_rural & mask_electricity], na.rm =TRUE)
+    trends$pop_pix[row_mask & trends$type == "total"] <- trends$pop_pix[row_mask & trends$type == "urban"] +
+                                                                 trends$pop_pix[row_mask & trends$type == "rural"]
 
+    
     print(subset(trends, year==1999+i & iso3 == iso3j))
   }
 }
 
-#save(trends, file = "code_output/e_trends.RData")
+save(trends, file = "code_output/e_trends.RData")
