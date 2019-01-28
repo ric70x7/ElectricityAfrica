@@ -1,6 +1,5 @@
 # Add covariates from raster files
 # --------------------------------
-# Last edited: November 5, 2018
 
 rm(list = ls())
 library(raster)
@@ -14,7 +13,7 @@ mode <- function(x) {
 add_covariates <- function(df) {
   # Add covariates to a dataframe with columns ("lon", "lat")
   years <- 2000:2015
-  
+
   # Add NTL data to the dataframe
   print("ntl")
   df$ntl <- NA
@@ -28,7 +27,7 @@ add_covariates <- function(df) {
       df$ntl[mask] <- extract(afr, df[mask, c("lon", "lat")], buffer=5000, fun = function(x) {mean(x[x<100], na.rm=TRUE)})
     }
   }
-  
+
   # Add population data to the dataframe
   print("pop")
   df$pop <- NA
@@ -41,7 +40,7 @@ add_covariates <- function(df) {
       df$pop[mask] <- extract(afr, df[mask, c("lon", "lat")], buffer=5000, fun = function(x) {mean(x, na.rm=TRUE)})
     }
   }
-  
+
   # Add other covariates to the dataframe
   print("impervious")
   for(i in seq(years)){
@@ -53,7 +52,7 @@ add_covariates <- function(df) {
       df$dist2impervious[mask] <- extract(afr, df[mask, c("lon", "lat")], buffer=5000, fun = function(x) {mean(x, na.rm=TRUE)})
     }
   }
-    
+
   print("lctype")
   df$lctype <- NA
   for(i in seq(years)){
@@ -65,7 +64,7 @@ add_covariates <- function(df) {
       df$lctype[mask] <- extract(afr, df[mask, c("lon", "lat")], buffer=5000, fun = mode)
     }
   }
-  
+
   print("prob")
   df$freq_impervious <- NA
   for(i in seq(years)){
@@ -77,14 +76,13 @@ add_covariates <- function(df) {
       df$freq_impervious[mask] <- extract(afr, df[mask, c("lon", "lat")], buffer=5000, fun = function(x) {mean(x, na.rm=TRUE)})
     }
   }
-  
+
   # Transformed distance
   df$kz <- exp(- df$dist2impervious / sd(df$dist2impervious, na.rm = TRUE))
   df$kz[is.na(df$kz)] <- 0
-  
+
   # Standardize covariates
   df$z.year <- df$year - 1999
-  
+
   return(df)
 }
-
