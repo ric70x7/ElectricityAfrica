@@ -23,4 +23,5 @@ plt <- ggplot(decaydf, aes(distance, delta)) +
 fig_data <- ggdraw(xlim = c(0, 8), ylim = c(0, 4)) +
             draw_plot(plt, x = 0, y = 0, width = 8, height = 4)
 
-save_plot("figs/02_fig_decay.pdf", fig_data, base_width = 8, base_height = 4)
+#save_plot("figs/02_fig_decay.pdf", fig_data, base_width = 8, base_height = 4)
+save_plot("figs/02_fig_decay.eps", fig_data, base_width = 8, base_height = 4, device = cairo_ps)

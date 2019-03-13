@@ -5,6 +5,8 @@ rm(list = ls())
 graphics.off()
 library(ggplot2)
 library(INLA)
+library(maptools)
+
 
 load("code_output/offset_sensitivity.RData")
 load("code_output/synthetic_params.RData")
@@ -201,6 +203,19 @@ plt11 <- random_plot(param = "kappa", xlims_p = NULL)
 plt12 <- random_plot(param = "variance nominal", xlims_p = NULL)
 plt13 <- random_plot(param = "range nominal", xlims_p = NULL)
 
+font_size <- 8
+plt_legend1 <- ggplot() + theme_void() + coord_equal() + xlim(0, 12) + ylim(0, 6) 
+  #geom_text() + annotate("text", label="Population\n(x 1000)", x=2, y=6, size=font_size+1)
+intervals = c("Exact locations", "Displaced locations")
+for (i in 2:3) {
+  square <- data.frame(x=c(0, 1, 1, 0, 0), y=c(i, i, i+1, i+1, i))
+  plt_legend1 <- plt_legend1 + geom_boxplot(data=square, aes(x=x, y=y),
+                                          fill = viridis::viridis_pal(option="E")(2)[i-1], alpha=.8) +
+    geom_text() + annotate("text", label=intervals[i-1], x = 1.5, y=i + .5, size = font_size, hjust=0)
+}
+
+
+
 # Panel plot fixed effects
 psc <- 4
 plt_fixed <- cowplot::ggdraw(xlim=c(0,3*psc), ylim = c(0,4*psc)) +
@@ -214,27 +229,31 @@ plt_fixed <- cowplot::ggdraw(xlim=c(0,3*psc), ylim = c(0,4*psc)) +
 
         cowplot::draw_plot(plt7, x=0*psc, y=1*psc, width = 1*psc, height = 1*psc) +
         cowplot::draw_plot(plt8, x=1*psc, y=1*psc, width = 1*psc, height = 1*psc) +
-        cowplot::draw_plot(plt9, x=2*psc, y=1*psc, width = 1*psc, height = 1*psc) +
+        cowplot::draw_plot(plt10, x=2*psc, y=1*psc, width = 1*psc, height = 1*psc) +
 
-        cowplot::draw_plot(plt10, x=1*psc, y=0*psc, width = 1*psc, height = 1*psc) +
+        cowplot::draw_plot(plt9, x=0*psc, y=0*psc, width = 1*psc, height = 1*psc) +
+        cowplot::draw_plot(plt_legend1, x=1*psc, y=0*psc, width = 2*psc, height = 1*psc) +
 
         cowplot::draw_plot_label(LETTERS[1:10], c(rep(0:2, 3), 1)*psc,
                                  c(sort(rep(2:4, 3)*psc, decreasing = TRUE), 1*psc),
                                  size=18, colour = "grey")
 
-cowplot::ggsave('figs/comparison_fixed.pdf', plt_fixed, width=12, height=16)
+#cowplot::ggsave('figs/comparison_fixed.pdf', plt_fixed, width=12, height=16)
+cowplot::ggsave('figs/comparison_fixed.eps', plt_fixed, width=12, height=16, device=cairo_ps)
 
 # Panel plot random effects
 psc <- 4
-plt_random <- cowplot::ggdraw(xlim=c(0,3*psc), ylim = c(0,1*psc)) +
+plt_random <- cowplot::ggdraw(xlim=c(0,4*psc), ylim = c(0,1*psc)) +
         cowplot::draw_plot(plt11, x=0*psc, y=0*psc, width = 1*psc, height = 1*psc) +
         cowplot::draw_plot(plt12, x=1*psc, y=0*psc, width = 1*psc, height = 1*psc) +
         cowplot::draw_plot(plt13, x=2*psc, y=0*psc, width = 1*psc, height = 1*psc) +
+        cowplot::draw_plot(plt_legend1, x=3*psc, y=0*psc, width = 1*psc, height = 1*psc) +
 
         cowplot::draw_plot_label(LETTERS[1:3], (0:2)*psc, rep(1, 3)*psc,
                                  size=18, colour = "grey")
 
-cowplot::ggsave('figs/comparison_random.pdf', plt_random, width=12, height=4)
+#cowplot::ggsave('figs/comparison_random.pdf', plt_random, width=12, height=4)
+cowplot::ggsave('figs/comparison_random.eps', plt_random, width=16, height=4, device=cairo_ps)
 
 
 # Obfuscated vs Non-obfuscated estimates
@@ -303,7 +322,8 @@ plt_vs <- cowplot::ggdraw(xlim=c(0,3*psc), ylim = c(0,1*psc)) +
         cowplot::draw_plot_label(LETTERS[1:3], (0:2)*psc, rep(1, 3)*psc,
                                  size=18, colour = "grey")
 
-cowplot::ggsave('figs/comparison_estimates.pdf', plt_vs, width=12, height=4)
+#cowplot::ggsave('figs/comparison_estimates.pdf', plt_vs, width=12, height=4)
+cowplot::ggsave('figs/comparison_estimates.eps', plt_vs, width=12, height=4, device=cairo_ps)
 
 centered_diff <- data.frame(lon = (dfobfsc$lon - dftruth$lon)*111,
                             lat = (dfobfsc$lat - dftruth$lat)*111)
@@ -338,4 +358,5 @@ plt_off <- cowplot::ggdraw(xlim=c(0,3*psc), ylim = c(0,1*psc)) +
            cowplot::draw_plot_label(LETTERS[1:2], c(0, 1.5)*psc, rep(1, 2)*psc,
                                     size=18, colour = "grey")
 
-cowplot::ggsave('figs/offset_distance.pdf', plt_off, width=12, height=4)
+#cowplot::ggsave('figs/offset_distance.pdf', plt_off, width=12, height=4)
+cowplot::ggsave('figs/offset_distance.eps', plt_off, width=12, height=4, device=cairo_ps)

@@ -2,6 +2,7 @@
 # ----------------------
 
 library(ggplot2)
+library(ggthemes)
 
 graphics.off()
 rm(list = ls())
@@ -64,7 +65,7 @@ if FALSE { # Run only if an update is needed
       print(subset(trends, year==1999+i & iso3 == iso3j))
     }
   }
-  save(trends, file = "code_output/e_trends.RData")
+  #save(trends, file = "code_output/e_trends.RData")
 }
 
 # Process data per country: "GHA", "MAR", "LBR"
@@ -117,41 +118,69 @@ for (i in 1:14) {
 # ---
 yi <- 2004
 gg_df <- gg_mar
+font_size <- 15
 
 plt1 <- ggplot(data=subset(gg_df, year == yi), aes(lon, lat)) + geom_raster(fill="black") +
   geom_raster(data=subset(gg_df, year == yi & gg_df$ntlg > 0), aes(fill=log(ntlg)))  +
-  viridis::scale_fill_viridis(option = "magma", discrete = FALSE, guide=FALSE) +
+  viridis::scale_fill_viridis(option = "magma", discrete = FALSE, guide=FALSE,
+                              breaks = c(0, 1, 2, 3, 4),
+                              labels=c('0 - 2', '2 - 5', '5 - 12', '12 - 27', '27 - 63')) +
+  guides(fill=guide_legend(title="Dynamic\nrange")) +
+  theme_map(base_size = font_size) +
   coord_fixed() +
   theme_void()
 
 plt2 <- ggplot(data=subset(gg_df, year == yi), aes(lon, lat)) +
   geom_raster(data=subset(gg_df, year == yi ), aes(fill=lulc))  +
-  viridis::scale_fill_viridis(option = "viridis", discrete = FALSE, limits=c(0,1), guide=FALSE) +
+  viridis::scale_fill_viridis(option = "viridis", discrete = FALSE, limits=c(0,1), guide=FALSE,
+                              breaks = c(.2, .4, .6, .8, 1),
+                              labels=c('0.0 - 0.2', '0.2 - 0.4', '0.4 - 0.6', '0.6 - 0.8', '0.8 - 1.0')) +
+  guides(fill=guide_legend(title="Proximity")) +
+  theme_map(base_size = font_size) +
   coord_fixed() +
   theme_void()
 
 plt3 <- ggplot(data=subset(gg_df, year == yi), aes(lon, lat)) +
-  geom_raster(data=subset(gg_df, year == yi ), aes(fill=factor(elec)))  +
-  viridis::scale_fill_viridis(option = "E", discrete = TRUE, guide=FALSE) +
+  geom_raster(data=subset(gg_df, year == yi ), aes(fill=elec))  +
+  viridis::scale_fill_viridis(option = "E", discrete = FALSE, limits=c(0,1), guide=FALSE,
+                              breaks = c(.2, .4, .6, .8, 1),
+                              labels=c('0.0 - 0.2', '0.2 - 0.4', '0.4 - 0.6', '0.6 - 0.8', '0.8 - 1.0')) +
+  guides(fill=guide_legend(title="Probability")) +
+  theme_map(base_size = font_size) +
   coord_fixed() +
   theme_void()
 
 plt4 <- ggplot(data=subset(gg_df, year == yi), aes(lon, lat)) + geom_raster(fill="brown", alpha=.2) +
   geom_point(data=subset(df, iso3=="MAR" & lat > 27.2), aes(color=has_electricity/total)) +
-  viridis::scale_color_viridis(option = "E", discrete = FALSE, limits=c(0,1), guide=FALSE) +
+  viridis::scale_color_viridis(option = "E", discrete = FALSE, limits=c(0,1), guide=FALSE,
+                              breaks = c(.2, .4, .6, .8, 1),
+                              labels=c('0.0 - 0.2', '0.2 - 0.4', '0.4 - 0.6', '0.6 - 0.8', '0.8 - 1.0')) +
+  guides(color=guide_legend(title="Fraction")) +
+  theme_map(base_size = font_size) +
   coord_fixed() +
   theme_void()
 
-fig_data <- cowplot::ggdraw(xlim = c(0, 16), ylim = c(0, 4)) +
-            cowplot::draw_plot(plt4, x = 0, y = 0, width = 4, height = 4) +
-            cowplot::draw_plot(plt1, x = 4, y = 0, width = 4, height = 4) +
-            cowplot::draw_plot(plt2, x = 8, y = 0, width = 4, height = 4) +
-            cowplot::draw_plot(plt3, x = 12, y = 0, width = 4, height = 4) +
+#fig_data <- cowplot::ggdraw(xlim = c(0, 16), ylim = c(0, 4)) +
+#            cowplot::draw_plot(plt4, x = 0, y = 0, width = 4, height = 4) +
+#            cowplot::draw_plot(plt1, x = 4, y = 0, width = 4, height = 4) +
+#            cowplot::draw_plot(plt2, x = 8, y = 0, width = 4, height = 4) +
+#            cowplot::draw_plot(plt3, x = 12, y = 0, width = 4, height = 4) +
+#
+#            cowplot::draw_plot_label(LETTERS[1:4], c(0, 4, 8, 12), c(4, 4, 4, 4),
+#                                     size=24, colour = "grey")
 
-            cowplot::draw_plot_label(LETTERS[1:4], c(0, 4, 8, 12), c(4, 4, 4, 4),
+fig_data <- cowplot::ggdraw(xlim = c(0, 12), ylim = c(0, 8)) +
+            cowplot::draw_plot(plt4, x = 0, y = 4, width = 6, height = 4) +
+            cowplot::draw_plot(plt1, x = 6, y = 4, width = 6, height = 4) +
+            cowplot::draw_plot(plt2, x = 0, y = 0, width = 6, height = 4) +
+            cowplot::draw_plot(plt3, x = 6, y = 0, width = 6, height = 4) +
+
+            cowplot::draw_plot_label(LETTERS[1:4], c(0, 6, 0, 6), c(8, 8, 4, 4),
                                      size=24, colour = "grey")
 
-cowplot::save_plot("figs/13_fig_mar.pdf", fig_data, base_width = 16, base_height = 4)
+
+#cowplot::save_plot("figs/13_fig_mar.pdf", fig_data, base_width = 16, base_height = 4)
+cowplot::save_plot("figs/13_fig_mar.eps", fig_data, base_width = 12, base_height = 8, device=cairo_ps)
 
 
 # GHA
@@ -192,8 +221,33 @@ for (i in 1:4) {
 
 }
 
+
+font_size <- 9
+plt_legend1 <- ggplot() + theme_void() + coord_equal() + xlim(0, 4) + ylim(0, 6.5) +
+  geom_text() + annotate("text", label="Population\n(x 1000)", x=2, y=6, size=font_size+1)
+intervals = c("0 - 2", "2 - 4", "4 - 6", "6 - 8", "> 8")
+for (i in 1:5) {
+  square <- data.frame(x=c(0, 1, 1, 0, 0), y=c(i-1, i-1, i, i, i-1))
+  plt_legend1 <- plt_legend1 + geom_boxplot(data=square, aes(x=x, y=y),
+                                          fill = viridis::viridis_pal(option="magma")(5)[i]) + 
+    geom_text() + annotate("text", label=intervals[i], x = 2.5, y=i - .5, size = font_size)
+}
+
+plt_legend2 <- ggplot() + theme_void() + coord_equal() + xlim(0, 4) + ylim(0, 6.5) +
+  geom_text() + annotate("text", label="Probability", x=2, y=6, size=font_size+1)
+intervals = c("0.0 - 0.2", "0.2 - 0.4", "0.4 - 0.6", "0.6 - 0.8", "0.8 - 1.0")
+for (i in 1:5) {
+  square <- data.frame(x=c(0, 1, 1, 0, 0), y=c(i-1, i-1, i, i, i-1))
+  plt_legend2 <- plt_legend2 + geom_boxplot(data=square, aes(x=x, y=y),
+                                          fill = viridis::viridis_pal(option="E")(5)[i]) + 
+    geom_text() + annotate("text", label=intervals[i], x = 2.8, y=i - .5, size = font_size)
+}
+
+
+
+
 psc=4
-fig_data <- cowplot::ggdraw(xlim = c(0, 16), ylim = c(0, 8)) +
+fig_data <- cowplot::ggdraw(xlim = c(0, 20), ylim = c(0, 8)) +
             cowplot::draw_plot(ntlg_list[[1]], x = 0, y = 4, width = 4, height = 4) +
             cowplot::draw_plot(ntlg_list[[2]], x = 4, y = 4, width = 4, height = 4) +
             cowplot::draw_plot(ntlg_list[[3]], x = 8, y = 4, width = 4, height = 4) +
@@ -203,13 +257,17 @@ fig_data <- cowplot::ggdraw(xlim = c(0, 16), ylim = c(0, 8)) +
             cowplot::draw_plot(elec_list[[2]], x = 4, y = 0, width = 4, height = 4) +
             cowplot::draw_plot(elec_list[[3]], x = 8, y = 0, width = 4, height = 4) +
             cowplot::draw_plot(elec_list[[4]], x = 12, y = 0, width = 4, height = 4) +
+  
+            cowplot::draw_plot(plt_legend1, x = 16, y = 4, width = 4, height = 4) +
+            cowplot::draw_plot(plt_legend2, x = 16, y = 0, width = 4, height = 4) +
 
             cowplot::draw_plot_label(rep(c("00", "05", "10", "13"), 2),
                                      rep(0:3, 2)*psc,
                                      sort(rep(2:1, 4), decreasing = TRUE) * psc,
                                      size=24, colour = "grey")
 
-cowplot::save_plot("figs/13_fig_gha.pdf", fig_data, base_width = 16, base_height = 8)
+#cowplot::save_plot("figs/13_fig_gha.pdf", fig_data, base_width = 16, base_height = 8)
+cowplot::save_plot("figs/13_fig_gha.eps", fig_data, base_width = 20, base_height = 8, device=cairo_ps)
 
 
 
@@ -252,17 +310,31 @@ plt_trend <- ggplot(subset(trends, type == "total" & iso3 == "LBR"),
                 axis.text = element_text(size = 16),
                 axis.title = element_text(size = 16))
 
+font_size <- 6
+plt_legend3 <- ggplot() + theme_void() + coord_equal() + xlim(0, 4) + ylim(0, 6.5) +
+  geom_text() + annotate("text", label="Probability", x=2, y=6, size=font_size+2)
+intervals = c("0.000 - 0.007", "0.007 - 0.020", "0.020 - 0.060", "0.060 - 0.173", "0.173 - 0.500")
+for (i in 1:5) {
+  square <- data.frame(x=c(0, 1, 1, 0, 0), y=c(i-1, i-1, i, i, i-1))
+  plt_legend3 <- plt_legend3 + geom_boxplot(data=square, aes(x=x, y=y),
+                                          fill = viridis::viridis_pal(option="E")(5)[i]) + 
+    geom_text() + annotate("text", label=intervals[i], x = 3, y=i - .5, size = font_size)
+}
+
+
 
 psc=4
-fig_data <- cowplot::ggdraw(xlim = c(0, 16), ylim = c(0, 4)) +
-            cowplot::draw_plot(elec_list[[1]], x = 0, y = 0, width = 4, height = 4) +
-            cowplot::draw_plot(elec_list[[2]], x = 4, y = 0, width = 4, height = 4) +
-            cowplot::draw_plot(plt_trend, x = 8, y = 0, width = 8, height = 4) +
+fig_data <- cowplot::ggdraw(xlim = c(0, 20), ylim = c(0, 4)) +
+            cowplot::draw_plot(plt_legend3, x = 0, y = 0, width = 4, height = 4) +
+            cowplot::draw_plot(elec_list[[1]], x = 4, y = 0, width = 4, height = 4) +
+            cowplot::draw_plot(elec_list[[2]], x = 8, y = 0, width = 4, height = 4) +
+            cowplot::draw_plot(plt_trend, x = 12, y = 0, width = 8, height = 4) +
 
-            cowplot::draw_plot_label(LETTERS[1:3], c(0, 4, 8), rep(4, 3),
+            cowplot::draw_plot_label(LETTERS[1:3], c(4, 8, 12), rep(4, 3),
                                      size=24, colour = "grey")
 
-cowplot::save_plot("figs/13_fig_lbr.pdf", fig_data, base_width = 16, base_height = 4)
+#cowplot::save_plot("figs/13_fig_lbr.pdf", fig_data, base_width = 16, base_height = 4)
+cowplot::save_plot("figs/13_fig_lbr.eps", fig_data, base_width = 20, base_height = 4, device=cairo_ps)
 
 
 # Countries timeline
@@ -306,4 +378,5 @@ plt_fig <- ggplot(afr_total, aes(year, 100*pop_pix/pop_total)) +
                   axis.text = element_text(size = 20),
                   axis.title = element_text(size = 18))
 
-cowplot::save_plot("figs/11_fig_trends_tot.pdf", plt_fig, base_width = 12, base_height = 16)
+#cowplot::save_plot("figs/11_fig_trends_tot.pdf", plt_fig, base_width = 12, base_height = 16)
+cowplot::save_plot("figs/11_fig_trends_tot.eps", plt_fig, base_width = 12, base_height = 16, device=cairo_ps)

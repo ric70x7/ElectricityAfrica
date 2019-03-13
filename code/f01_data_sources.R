@@ -9,8 +9,15 @@ library(ggthemes)
 library(viridis)
 library(cowplot)
 rm(list = ls())
+
+obfuscated_only <- TRUE
+
 load("code_output/merged_data2.RData")
 df <- subset(df, iso3 != "COM") #outiside mainland U Madagazcar
+
+if (obfuscated_only) {
+  df <- subset(df, obfuscated)
+}
 
 # Load and fortify shapefile
 afri_main <- readOGR(dsn = "data/Africa_main_country", layer="Africa_main_country")
@@ -43,17 +50,30 @@ for (yi in 2000:2013) {
 
 # DHS country-level data points
 font_size = 15
-dhs_map <- ggplot(afri_main.df, aes(long, lat)) +
-           geom_polygon(aes(group = group), colour = "grey", fill = "white") +
-           geom_polygon(data = subset(adf1, years > 0), aes(long, lat, group = group,  fill = factor(years)),  colour = "grey") +
-           geom_polygon(data = subset(afri_main.df, ISO3 == "ZMB"), aes(long, lat), colour="darkred", fill="white", alpha=0) +
-           geom_polygon(data = subset(afri_main.df, ISO3 == "MWI"), aes(long, lat), colour="darkred", fill="white", alpha=0) +
-           viridis::scale_fill_viridis(option = "E", discrete = TRUE) +
-           #scale_fill_brewer(palette = "Blues", guide = guide_legend(title = "Number of surveys")) +
-           guides(fill=guide_legend(title="Number\n of surveys")) +
-           theme_map(base_size = font_size) +
-           coord_equal()
 
+if (obfuscated_only) {
+  dhs_map <- ggplot(afri_main.df, aes(long, lat)) +
+             geom_polygon(aes(group = group), colour = "grey", fill = "white") +
+             geom_polygon(data = subset(adf1, years > 0), aes(long, lat, group = group,  fill = factor(years)),  colour = "grey") +
+             #geom_polygon(data = subset(afri_main.df, ISO3 == "ZMB"), aes(long, lat), colour="darkred", fill="white", alpha=0) +
+             #geom_polygon(data = subset(afri_main.df, ISO3 == "MWI"), aes(long, lat), colour="darkred", fill="white", alpha=0) +
+             viridis::scale_fill_viridis(option = "E", discrete = TRUE) +
+             guides(fill=guide_legend(title="Number\n of surveys")) +
+             theme_map(base_size = font_size) +
+             coord_equal()
+  
+} else {
+  dhs_map <- ggplot(afri_main.df, aes(long, lat)) +
+             geom_polygon(aes(group = group), colour = "grey", fill = "white") +
+             geom_polygon(data = subset(adf1, years > 0), aes(long, lat, group = group,  fill = factor(years)),  colour = "grey") +
+             geom_polygon(data = subset(afri_main.df, ISO3 == "ZMB"), aes(long, lat), colour="darkred", fill="white", alpha=0) +
+             geom_polygon(data = subset(afri_main.df, ISO3 == "MWI"), aes(long, lat), colour="darkred", fill="white", alpha=0) +
+             viridis::scale_fill_viridis(option = "E", discrete = TRUE) +
+             guides(fill=guide_legend(title="Number\n of surveys")) +
+             theme_map(base_size = font_size) +
+             coord_equal()
+}
+  
 # Annual country-level data points
 timeline <- ggplot(dfyears, aes(factor(year), num)) +
             geom_bar(stat="identity", fill = viridis::viridis_pal(option="E")(2)[1], alpha=.8) +
@@ -69,4 +89,7 @@ fig_data <- ggdraw(xlim = c(0,12), ylim = c(0,4)) +
             draw_plot(dhs_map, x = 0, y = 0, width = 4, height = 4) +
             draw_plot(timeline,x = 4, y = 0, width = 8, height = 4) +
             draw_plot_label(c("A", "B"), c(0, 4), c(4, 4), size = 18, colour = "grey")
-save_plot("figs/01_fig_data.pdf", fig_data, base_width = 12, base_height = 4)
+#save_plot("figs/01_fig_data.pdf", fig_data, base_width = 12, base_height = 4)
+#save_plot("figs/01_fig_data_obfuscated_only.pdf", fig_data, base_width = 12, base_height = 4)
+save_plot("figs/01_fig_data_obfuscated_only.eps", fig_data, base_width = 12, base_height = 4,
+          device = cairo_ps)

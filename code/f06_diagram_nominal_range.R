@@ -46,4 +46,5 @@ plt <- ggplot(data=abc, aes(lon, lat)) +
 fig_data <- ggdraw(xlim = c(0,12), ylim = c(0,4)) +
             draw_plot(plt, x = 0, y = 0, width = 12, height = 4)
 
-save_plot("figs/09_fig_displacement.pdf", fig_data, base_width = 12, base_height = 4)
+#save_plot("figs/09_fig_displacement.pdf", fig_data, base_width = 12, base_height = 4)
+save_plot("figs/09_fig_displacement.eps", fig_data, base_width = 12, base_height = 4, device=cairo_ps)
