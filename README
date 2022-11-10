@@ -1,5 +1,19 @@
 About this repository
 ---------------------
 
-The files in this repository contain the code used to estimate electricity access across Africa from 2000 to 2013.
-This is a work under review process. If this work gets published, more details will be added here.
+This repository contains the code used for this publication: https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0214635
+
+@article{pub.1113863085,
+ abstract = {Household electricity access data in Africa are scarce, particularly at the subnational level. We followed a model-based Geostatistics approach to produce maps of electricity access between 2000 and 2013 at a 5 km resolution. We collated data from 69 nationally representative household surveys conducted in Africa and incorporated nighttime lights imagery as well as land use and land cover data to produce maps of electricity access between 2000 and 2013. The information produced here can be an aid for understanding of how electricity access has changed in the region during this 14 year period. The resolution and the continental scale makes it possible to combine these data with other sources in applications in the socio-economic field, both at a local or regional level.},
+ author = {Andrade-Pacheco, Ricardo and Savory, David J. and Midekisa, Alemayehu and Gething, Peter W. and Sturrock, Hugh J. W. and Bennett, Adam},
+ doi = {10.1371/journal.pone.0214635},
+ journal = {PLOS ONE},
+ keywords = {},
+ note = {https://doi.org/10.1371/journal.pone.0214635},
+ number = {5},
+ pages = {e0214635},
+ title = {Household electricity access in Africa (2000–2013): Closing information gaps with model-based geostatistics},
+ url = {https://app.dimensions.ai/details/publication/pub.1113863085},
+ volume = {14},
+ year = {2019}
+}
