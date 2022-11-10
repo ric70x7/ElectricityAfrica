@@ -1,7 +1,7 @@
 About this repository
 ---------------------
 
-This repository contains the code used for this publication: https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0214635
+This repository contains the code used for this publication:
 
 @article{pub.1113863085,
  abstract = {Household electricity access data in Africa are scarce, particularly at the subnational level. We followed a model-based Geostatistics approach to produce maps of electricity access between 2000 and 2013 at a 5 km resolution. We collated data from 69 nationally representative household surveys conducted in Africa and incorporated nighttime lights imagery as well as land use and land cover data to produce maps of electricity access between 2000 and 2013. The information produced here can be an aid for understanding of how electricity access has changed in the region during this 14 year period. The resolution and the continental scale makes it possible to combine these data with other sources in applications in the socio-economic field, both at a local or regional level.},
